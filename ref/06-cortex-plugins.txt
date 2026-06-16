@@ -1,0 +1,107 @@
+The fundamental structural bones for a routed plugin system are already hidden inside your code, even though the execution flow is currently flat.
+
+---
+
+### **1. The State of the "Cortex" in the Current Code**
+
+Right now, an explicit file or object named `Cortex` does not exist. However, the foundational infrastructure for it is completely built out inside your nervous system module (`brain.js`).
+
+* **The Capability Registry is Already There:** In `makeNervous()`, when a member registers, the system records an explicit `does` array of capabilities:
+```javascript
+rec.does = Array.isArray(m.does) ? m.does : (rec.does || []); //
+
+```
+
+
+* **Skill-Based Discovery Already Exists:** The nervous system contains a pre-built `find` utility specifically designed to search for nodes based on their declared skills:
+```javascript
+function find(cap) { 
+  cap = String(cap || '').toLowerCase(); 
+  return Object.keys(neurons).filter(function (id) { 
+    return (neurons[id].does || []).some(function (d) { 
+      return String(d.name || '').toLowerCase() === cap; 
+    }); 
+  }); 
+} //
+
+```
+
+
+
+**The Bottleneck:** Even though the nervous system can dynamically catalog skills, `createCouncil` completely ignores this feature. It treats the council as a flat democracy, manually looping over a fixed, hardcoded array of `members`. It forces every single node to run a `propose`, `vote`, and `veto` sequence on every single turn, regardless of what the user actually said.
+
+---
+
+### **2. What Parts Are Missing?**
+
+To transform this from a flat loop into a true Hierarchical Routing Tree, the architecture needs three specific missing pieces:
+
+1. **The Executive Router (The Cortex Processor):** A top-level script or module that intercepts the context *before* a council is created. Instead of initializing all nodes, it uses `nervous.find()` to dynamically isolate sub-groups.
+2. **An Intent/Domain Taxonomy Classifier:** In `nation.js`, you currently have a lean, regex-based text analyzer called `CUES` that reads basic emotional states (`warmth`, `distress`, `humor`, `anger`). To route deep technical or situational requests, this classification engine needs to be expanded to recognize domains (e.g., detecting if a prompt is `math`, `history`, `creative`, or `system_meta`).
+3. **Dynamic Conditional Council Assembly:** You need a function like `cortex.spawnSubCouncil(domain)` that dynamically retrieves the specialized IDs, sets their status to `active`, and sets unrelated nodes to `standby` or `asleep` via the existing `nervous.setState()` hooks.
+
+---
+
+### **3. How Micro-Faculties Work: Are They Plugins?**
+
+Yes, they adapt beautifully into a standalone plugin architecture.
+
+Right now, the Seven Nations are heavy monoliths: they each track historical user sentiment metrics, hold personal relationships/bonds with other nodes, and evaluate text through broad linguistic lenses (`warm`, `clear`, `play`).
+
+A **Micro-Faculty** is a stripped-down, stateless, specialized worker plugin. It simply hooks into your existing `nervous` system registry:
+
+```javascript
+// Example of a Math Plugin registering onto your existing bus
+nervous.register({
+  id: 'math_faculty',
+  kind: 'process',
+  does: [{ name: 'math' }, { name: 'logic' }], // Discovered by the Cortex
+  onAsk: function (msg) {
+    if (msg.type === 'propose') {
+      // Evaluate if the numbers in the prompt need strict handling
+      return { text: 'calculate', conf: 0.95 };
+    }
+    if (msg.type === 'vote') {
+      // High score to clear, analytical responses; low score to emotional ones
+      return msg.proposal.text === 'analytical' ? 1.0 : 0.1;
+    }
+  }
+});
+
+```
+
+---
+
+### **4. Making It Custom ("This node knows math, that one knows history")**
+
+You can absolutely customize nodes to hold specific domain expertise. Instead of using generalized personality temperaments, you can introduce a **Domain Competence Matrix** to your micro-nodes.
+
+When the user speaks, the Cortex classifies the topic. Instead of letting all nodes vote with equal weight, the node's baseline competence acts as a **dynamic multiplier** during the resolution phase.
+
+#### **Conceptual Structural Blueprint**
+
+You can define a new set of hyper-specialized micro-nodes that look like this:
+
+```javascript
+var MICRO_FACULTIES = [
+  {
+    id: 'calculator',
+    expertise: { math: 1.0, logic: 0.8, history: 0.0 },
+    propose: function(ctx) { /* formulate precise structured step */ }
+  },
+  {
+    id: 'chronicler',
+    expertise: { history: 1.0, culture: 0.7, math: 0.0 },
+    propose: function(ctx) { /* look up historical anchoring context */ }
+  }
+];
+
+```
+
+#### **How the Flow Operates Under the Hood**
+
+1. **User Types:** *"Can you explain the historical significance of cryptography and calculate $2^{16}$?"*
+2. **Cortex Classification Pass:** The Cortex scans the text and flags the context as: `{ domains: ['history', 'math'] }`.
+3. **Pruning the Tree:** The Cortex queries `nervous.find('history')` and `nervous.find('math')`. It wakes up the `calculator` and the `chronicler`, while leaving nodes like `play` or `heart` completely asleep to save CPU cycles.
+4. **Targeted Deliberation:** Only the chosen experts run their `propose()` functions.
+5. **Weighted Resolution:** When `resolve()` computes the final ballot, the Cortex injects a domain multiplier: because the context is historical, the `chronicler`'s votes carry a $2\times$ weight modifier, allowing it to seamlessly outvote the calculator on stylistic tone, while the calculator retains complete control over the numerical data output.
