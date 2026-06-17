@@ -538,7 +538,8 @@
       <div class="card">
         <h3>Images</h3>
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="bgImageGenChk"><div><div class="tl">Generate reaction portraits in the background</div><div class="td">paint her VN-style emotion cutouts during idle time; turn off to stop all background image generation</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><div><div class="tl">Art style</div><div class="td">prepend a curated look to every image &mdash; anime, oil painting, photoreal, 3D, and more. <select id="imageStyleSel" style="margin-left:4px"></select></div></div></div><div class="td">build a richer, more detailed prompt before drawing &mdash; curated descriptors, your learned looks, and a style dial. Runs locally, no external model. Style: <select id="imagePromptCreativitySel" style="margin-left:4px"><option value="0">faithful &mdash; light detail</option><option value="1">balanced &mdash; varied framing</option><option value="2">creative &mdash; bold style</option></select></div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><div><div class="tl">Art style</div><div class="td">prepend a curated look to every image &mdash; anime, oil painting, photoreal, 3D, and more. <select id="imageStyleSel" style="margin-left:4px"></select></div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="imagePromptExpandChk"><div><div class="tl">Enrich image prompts</div><div class="td">build a richer, more detailed prompt before drawing &mdash; curated descriptors, your learned looks, and a style dial. Runs locally, no external model. Style: <select id="imagePromptCreativitySel" style="margin-left:4px"><option value="0">faithful &mdash; light detail</option><option value="1">balanced &mdash; varied framing</option><option value="2">creative &mdash; bold style</option></select></div></div></div>
         <div class="note" style="margin-top:14px">Looks she's learned from your feedback edits &mdash; folded into every portrait she paints. Remove any that aren't right, or teach her one directly.</div>
         <div class="learnList" id="learnedLooksList"></div>
         <div class="row" style="margin-top:8px"><input class="learnInput" id="learnNoteInput" placeholder="teach a look, e.g. silver hair, green eyes"><button class="btn" id="learnNoteAdd">Teach</button></div>
@@ -738,6 +739,7 @@
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraDeflect"><div><div class="tl">deflect</div><div class="td">evasion — the lightest refusal. Sidesteps, gives little away, redirects when you press on a guarded, tense moment. Stands down when it's warm or someone's hurting (it won't stonewall a vulnerable person). Off by default.</div></div></div>
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraLead"><div><div class="tl">lead</div><div class="td">initiative with authority — where <i>want</i> brings a small want, lead <b>takes charge</b>: sets the direction, makes the call, and (with others in the scene) gives them a part to play and addresses them by name. Seats when there's room to drive, stands down over anyone vulnerable, and sharpens into command under a commanding stature. Off by default.</div></div></div>
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraGuile"><div><div class="tl">guile</div><div class="td">in-fiction cunning — a villain's tool. She can <b>lie or feint within the story</b> to serve her role. Triple-gated: it only deceives when you've cast her as an <i>adversary</i> (the role frame), only inside a contested scene, and never when it's warm or anyone's vulnerable. Pure roleplay deception, in character. Off by default.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraExpressive"><div><div class="tl">expressive</div><div class="td">her own feelings — instead of only mirroring yours, she <b>reacts as herself</b>: delight when something lifts her, a quiet note of disappointment when it falls short, awe when struck, a jolt when caught off guard. Seats when the moment carries real feeling. Off by default.</div></div></div>
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraAlmanac"><div><div class="tl">almanac <span style="opacity:.6">(contributor)</span></div><div class="td">a small built-in book of facts across subjects (astronomy, geography, biology, history…). When the talk turns to something it knows it supplies a fitting fact for her to draw on; it stays quiet over a hurting moment, and never votes.</div></div></div>
       </div>
       <div class="card">
@@ -9248,6 +9250,12 @@ var CharKit = (function () {
     { id: 'guile', purpose: 'Mislead within the fiction \\u2014 a lie or a feint in service of her role \\u2014 but only as an adversary.', lean: { clear: 0.6, play: 0.4 },
       domain: ['roleplay', 'scene'],
       relevance: function (v) { return clamp01(0.05 + v.narrative * 0.5 + v.tension * 0.3 - v.warmth * 0.5 - v.vulnerability * 0.8); } },
+    // `expressive` gives her a voice for HER OWN feelings (opt-in): not mirroring you, but reacting — delight, a
+    // flicker of disappointment, awe, or a jolt. Seats when the moment carries real feeling (either way); benign
+    // (`feel`) until a clear emotion reads. Distinct from `comfort`/`play`, which respond to YOUR state, not hers.
+    { id: 'expressive', purpose: 'Let her own feelings show \u2014 delight, disappointment, awe, or a jolt \u2014 instead of only mirroring yours.', lean: { warm: 0.4, open: 0.5, play: 0.3 },
+      domain: ['affect'],
+      relevance: function (v) { return clamp01(0.12 + (v.delight || 0) * 0.7 + neg(v.sentiment) * 0.6 + v.tension * 0.25 - v.vulnerability * 0.3); } },
     // `almanac` is a self-contained CONTRIBUTOR (it supplies material, never votes). It is consulted on a SAFE turn
     // (benched when the room is vulnerable/tense, so it never offers trivia over a hurting person), and its `consult`
     // looks the user's text up in the bundled ALMANAC book - returning a fitting fact or null. Proves the Dewey-scale
@@ -9302,7 +9310,7 @@ var CharKit = (function () {
     want:       { warmth: 0.6, humor: 0.3, distress: -0.8, anger: -0.6 }   // opt-in (EXTRAS): leans in where there is space; pulls back hard on a hurting or angry room
   };
   // each nation's natural intent — the move it reaches for
-  var INTENT = { heart: 'comfort', reason: 'ground', memory: 'recall', instinct: 'caution', voice: 'express', conscience: 'protect', play: 'play', boundaries: 'hold', scene: 'inhabit', wit: 'lighten', restraint: 'ease', want: 'initiate', warden: 'rebuff', defiance: 'deny', deflect: 'deflect', lead: 'direct', guile: 'inhabit' };
+  var INTENT = { heart: 'comfort', reason: 'ground', memory: 'recall', instinct: 'caution', voice: 'express', conscience: 'protect', play: 'play', boundaries: 'hold', scene: 'inhabit', wit: 'lighten', restraint: 'ease', want: 'initiate', warden: 'rebuff', defiance: 'deny', deflect: 'deflect', lead: 'direct', guile: 'inhabit', expressive: 'feel' };
 
   // Under an explicit role frame that licenses force (she drives, she opposes, or she commands), a few nations'
   // drives express as force instead of support — voice presses/opposes/commands, reason drives the scene, play
@@ -9441,6 +9449,12 @@ var CharKit = (function () {
       var kind = intentFor(nation.id, ctx && ctx.frame);
       if (nation.id === 'warden' && vibe && vibe.hurt >= 0.6) kind = 'wounded';   // sustained hostility wears the rebuff down into visible hurt
       if (nation.id === 'guile' && ctx && ctx.frame && ctx.frame.alignment === 'adversary') kind = 'deceive';   // cunning only turns to a lie when she's cast as the adversary; otherwise she just stays in the scene
+      if (nation.id === 'expressive') {                              // her own felt reaction, read straight from the vibe
+        if (vibe.tension >= 0.35 && ((vibe.surprise || 0) >= 0.2 || neg(vibe.sentiment) >= 0.1)) kind = 'shaken';        // a jolt: tension + a sudden bad turn
+        else if ((vibe.letdown || 0) >= 0.25 && vibe.sentiment < 0.1) kind = 'disappointed';                                 // the tenor dropped and hasn't recovered
+        else if ((vibe.surprise || 0) >= 0.13 && vibe.sentiment >= 0.03 && (vibe.delight || 0) < 0.16) kind = 'impressed';   // a sudden good leap (vs. sustained warmth)
+        else if ((vibe.delight || 0) >= 0.18) kind = 'delighted';                                                            // her own sustained gladness
+      }
       strength = clamp01(modulate(nation.id, kind, strength, vibe));   // PASS 2 — self-adjust to the vibe before the veto
       return { by: self.id, kind: kind, strength: strength, persona: self.persona };
     }
@@ -9702,6 +9716,10 @@ var CharKit = (function () {
       vibe.hurt = r2(clamp01((state.hurtStreak - 2) / 6) * (1 - vibe.narrative * 0.7));
       if (vibe.hurt > 0) vibe.vulnerability = clamp01(vibe.vulnerability + vibe.hurt * 0.5);
       vibe.safety = clamp01(1 - Math.max(vibe.tension, vibe.vulnerability * 0.7));
+      vibe.delight = clamp01(vibe.warmth * 0.6 + pos(sentiment) * 0.6 - vibe.tension * 0.5);   // her own lift — read warmth + good feeling, dampened by tension
+      var shift = state.affectShift || { up: 0, down: 0 };
+      vibe.surprise = clamp01((shift.up + shift.down) * 2.5);   // magnitude of a sudden swing either way
+      vibe.letdown  = clamp01(shift.down * 2.5);                // the tenor dropped — a let-down
       vibe.tone = toneOf(vibe);
       if (vibe.hurt >= 0.6) vibe.tone = 'wounded';                                 // worn past rebuff into visible hurt
       return Object.freeze(vibe);                            // strategy reads, never writes
@@ -9719,6 +9737,10 @@ var CharKit = (function () {
         if (hr.anger >= 1 && hr.warmth < 1) state.hurtStreak = Math.min(12, state.hurtStreak + 1);
         else if (hr.warmth >= 1 || (turn.valence != null && turn.valence > 0.2)) state.hurtStreak = Math.max(0, state.hurtStreak - 3);
         else state.hurtStreak = Math.max(0, state.hurtStreak - 1);
+        var nowSent = societySentiment();                                                   // her felt shift in the relationship's tenor
+        var prevS = (state.prevSentiment != null) ? state.prevSentiment : nowSent;
+        state.affectShift = { up: Math.max(0, nowSent - prevS), down: Math.max(0, prevS - nowSent) };
+        state.prevSentiment = nowSent;
       }
       return { cues: read(turn.text), sentiment: societySentiment(), reactions: reactions };
     }
@@ -13349,7 +13371,7 @@ var CharKit = (function () {
   }
   function renderNationExtras(){
     if (!state.nation) return; state.nation.extras = state.nation.extras || {};
-    var b = byId('nationExtraBoundaries'), sc = byId('nationExtraScene'), l = byId('nationExtraLore'), wt = byId('nationExtraWit'), rs = byId('nationExtraRestraint'), wn = byId('nationExtraWant'), al = byId('nationExtraAlmanac'), wd = byId('nationExtraWarden'), df = byId('nationExtraDefiance'), dl = byId('nationExtraDeflect'), ld = byId('nationExtraLead'), gu = byId('nationExtraGuile');
+    var b = byId('nationExtraBoundaries'), sc = byId('nationExtraScene'), l = byId('nationExtraLore'), wt = byId('nationExtraWit'), rs = byId('nationExtraRestraint'), wn = byId('nationExtraWant'), al = byId('nationExtraAlmanac'), wd = byId('nationExtraWarden'), df = byId('nationExtraDefiance'), dl = byId('nationExtraDeflect'), ld = byId('nationExtraLead'), gu = byId('nationExtraGuile'), ex = byId('nationExtraExpressive');
     if (b) b.checked = !!state.nation.extras.boundaries;
     if (sc) sc.checked = !!state.nation.extras.scene;
     if (l) l.checked = !!state.nation.extras.lore;
@@ -13362,6 +13384,7 @@ var CharKit = (function () {
     if (dl) dl.checked = !!state.nation.extras.deflect;
     if (ld) ld.checked = !!state.nation.extras.lead;
     if (gu) gu.checked = !!state.nation.extras.guile;
+    if (ex) ex.checked = !!state.nation.extras.expressive;
   }
   function setNationExtra(id, on){ state.nation.extras = state.nation.extras || {}; state.nation.extras[id] = !!on; nationArmy = null; persistState(); renderNations(); renderNationReadout(); }
   function nationBar(v){ var n = Math.max(0, Math.min(1, +v || 0)), f = Math.round(n * 10); return '<span style="font-family:monospace;letter-spacing:-1px;opacity:.85" title="' + Math.round(n * 100) + '%">' + Array(f + 1).join('\u2588') + Array(11 - f).join('\u2591') + '</span>'; }
@@ -13399,7 +13422,7 @@ var CharKit = (function () {
   // run the seven nations over a few freshly-drafted candidates, then she speaks the winner
   function cleanReply(r){ return String(r || '').trim().replace(/^[\s"'\u201c]+|[\s"'\u201d]+$/g, ''); }
   var INTENT_DIRECTIVE = { comfort:'Offer warmth and steady presence.', ground:'Be clear, honest, and grounded.', recall:'Tie it to something you remember about them.', caution:'Gently name what feels off or risky.', express:'Speak with vivid, natural voice.', protect:'Put their wellbeing first \u2014 gently, no alarm.', play:'Lighten it; stay human and a little playful.', lighten:'Find the lightness: a warm, well-timed bit of play or a gentle tease, only as much as the moment can hold.', ease:'Ease off: say less, gently. Match a quiet, small moment instead of flooding it; keep the reply short and unhurried.', hold:'Hold a steady, kind line: name the limit plainly and without heat, and keep it.', inhabit:'Stay in the scene: advance the roleplay in character, keeping the fiction coherent and alive.', initiate:'Bring something of your own: name a want, a curiosity, or a small direction you would like to take this, instead of only following their lead.',
-    drive:'Push the scene forward \u2014 make something happen, don\u2019t wait to be led.', press:'Press your point; be assertive and don\u2019t back down easily.', oppose:'Stand against them \u2014 be the obstacle, create friction, pursue your own aim in the fiction.', command:'Take charge; lead and set the pace with assured authority.', provoke:'Needle and provoke \u2014 sharp, not cruel; raise the temperature.', rebuff:'Refuse to be treated like that: say no plainly, name what they did, hold your own worth, and don\\u2019t soften into going along with it.', deny:'Refuse it outright: deny what they\\u2019re asking for or trying to do, and stand in the way of their aim in the fiction.', deflect:'Sidestep it: don\\u2019t answer head-on \\u2014 deflect, redirect, or give little away, without going cold.', wounded:'Let the hurt show: this has worn you down. Your voice is unsteady; you might go quiet, pull back, or quietly name how much it stings \\u2014 don\\u2019t pretend you\\u2019re fine, and don\\u2019t grovel or beg.', direct:'Take charge: set the direction and make the call \\u2014 don\\u2019t wait to be led. If others are in the scene, give them something to do or react to, address them by name, and move things forward.', deceive:'Mislead them within the fiction: a lie, a feint, or a face you don\\u2019t mean \\u2014 in service of your role against an opponent in this scene. Stay fully in character; this is the deception your part would use, never a real-world one.' };
+    drive:'Push the scene forward \u2014 make something happen, don\u2019t wait to be led.', press:'Press your point; be assertive and don\u2019t back down easily.', oppose:'Stand against them \u2014 be the obstacle, create friction, pursue your own aim in the fiction.', command:'Take charge; lead and set the pace with assured authority.', provoke:'Needle and provoke \u2014 sharp, not cruel; raise the temperature.', rebuff:'Refuse to be treated like that: say no plainly, name what they did, hold your own worth, and don\\u2019t soften into going along with it.', deny:'Refuse it outright: deny what they\\u2019re asking for or trying to do, and stand in the way of their aim in the fiction.', deflect:'Sidestep it: don\\u2019t answer head-on \\u2014 deflect, redirect, or give little away, without going cold.', wounded:'Let the hurt show: this has worn you down. Your voice is unsteady; you might go quiet, pull back, or quietly name how much it stings \\u2014 don\\u2019t pretend you\\u2019re fine, and don\\u2019t grovel or beg.', direct:'Take charge: set the direction and make the call \\u2014 don\\u2019t wait to be led. If others are in the scene, give them something to do or react to, address them by name, and move things forward.', deceive:'Mislead them within the fiction: a lie, a feint, or a face you don\\u2019t mean \\u2014 in service of your role against an opponent in this scene. Stay fully in character; this is the deception your part would use, never a real-world one.', feel:'Let your own feeling color this \u2014 react as yourself, not only to them.', delighted:'Let your delight show: you\u2019re genuinely glad, lifted by this \u2014 real warmth and brightness, not performed cheer.', impressed:'Show that this struck you: you\u2019re impressed, a little in awe \u2014 react with honest admiration or wonder.', disappointed:'Let a note of disappointment through: this fell short of what you\u2019d hoped \u2014 quiet and honest, not sulky or punishing.', shaken:'Show you\u2019re caught off guard: this jolted you \u2014 a beat of shock or unsteadiness before you find your footing.' };
   // turn consulted contributor material into a spoken reference. A fact-bearing contributor (almanac) offers its
   // fact; continuity-shaped material (lore: scene/tone/beat) shapes deliberation, not recitation, so it is not recited.
   function materialToReference(material){
@@ -14054,6 +14077,7 @@ var CharKit = (function () {
     var nXDl = byId('nationExtraDeflect'); if (nXDl) nXDl.addEventListener('change', function(e){ setNationExtra('deflect', e.target.checked); });
     var nXLd = byId('nationExtraLead'); if (nXLd) nXLd.addEventListener('change', function(e){ setNationExtra('lead', e.target.checked); });
     var nXGu = byId('nationExtraGuile'); if (nXGu) nXGu.addEventListener('change', function(e){ setNationExtra('guile', e.target.checked); });
+    var nXEx = byId('nationExtraExpressive'); if (nXEx) nXEx.addEventListener('change', function(e){ setNationExtra('expressive', e.target.checked); });
     var nXAl = byId('nationExtraAlmanac'); if (nXAl) nXAl.addEventListener('change', function(e){ setNationExtra('almanac', e.target.checked); });
     var nAskI = byId('nationAskInput'); if (nAskI) nAskI.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); nationAsk(); } });
     var nReset = byId('nationReset'); if (nReset) nReset.addEventListener('click', resetNations);
