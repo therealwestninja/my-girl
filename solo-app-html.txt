@@ -162,7 +162,7 @@
   .modal-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
   .modal-head h2{font-family:var(--sans);font-weight:700;font-size:18px;margin:0;color:var(--ink)}
   .modal-head .x{margin-left:auto;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;padding:4px 8px}
-  .tabs{display:flex;gap:4px;padding:12px 22px 0;border-bottom:1px solid var(--line)}
+  .tabs{display:flex;flex-wrap:wrap;gap:4px;padding:12px 22px 0;border-bottom:1px solid var(--line)}
   .tab{border:none;background:transparent;color:var(--muted);font-size:14px;padding:8px 14px;border-bottom:2px solid transparent;margin-bottom:-1px}
   .tab.on{color:var(--accent-ink);border-bottom-color:var(--accent);font-weight:600}
   .panel{display:none;overflow-y:auto;padding:22px}.panel.on{display:block}
@@ -404,9 +404,12 @@
     .modal{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0}
     .modal-head{padding:13px 14px}
     .modal-head h2{font-size:16px}
-    .tabs{padding:8px 12px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-    .tabs::-webkit-scrollbar{display:none}
-    .tab{padding:7px 10px;font-size:13px;flex:0 0 auto;white-space:nowrap}
+    .tabs{padding:8px 10px 0;gap:3px}
+    .tab{padding:7px 11px;font-size:13px;flex:0 0 auto;white-space:nowrap}
+    /* mobile blow-out guard: nothing in the sheet may force a width past the viewport */
+    #settingsBg .panel,#settingsBg .charpane,#settingsBg .card{min-width:0;max-width:100%}
+    #settingsBg .panel img,#settingsBg input,#settingsBg textarea,#settingsBg select,#settingsBg pre{max-width:100%;box-sizing:border-box}
+    #settingsBg .row{flex-wrap:wrap}
     .panel,.charpane{padding:14px}
     .card{padding:13px;margin-bottom:12px}
     .btn{padding:7px 11px}
@@ -572,6 +575,15 @@
             <input type="number" id="castMaxSpeakers" min="1" max="6" style="width:56px;margin-left:6px"></label>
           <label style="font-size:13px;color:var(--ink-soft)">Max back-and-forth between characters
             <input type="number" id="castMaxFollowups" min="0" max="6" style="width:56px;margin-left:6px"></label>
+          <label style="font-size:13px;color:var(--ink-soft)">Reply style
+            <select id="castReplyMode" style="margin-left:6px">
+              <option value="primary">Primary only</option>
+              <option value="roundrobin">Round-robin (one, rotated)</option>
+              <option value="everyone">Everyone (up to the cap)</option>
+            </select></label>
+          <label style="font-size:13px;color:var(--ink-soft)" title="Round-robin only: let characters take a few turns among themselves before the scene waits for you.">
+            <input type="checkbox" id="castChain" style="margin-right:5px;vertical-align:middle">Let characters keep talking
+            <input type="number" id="castChainMax" min="1" max="6" style="width:50px;margin-left:6px"> turns</label>
         </div>
         <div class="note" style="margin-top:12px">Currently: <b id="charCurrent">default Chloe</b></div>
       </div>
@@ -694,10 +706,27 @@
     <!-- BRAIN: the Seven Nations — the top deliberation layer (readable; weights you control) -->
     <div class="panel" data-panel="brain">
       <div class="card">
-        <h3>The Seven Nations</h3>
-        <div class="note">Her top layer of mind: seven small "nations", each a little society that weighs in on what she should say. They vote; the votes are tallied by the weights below; the winner is spoken. Seven, so a vote never ties — heavier nations pull her replies their way.</div>
+        <h3>Live read <span style="font-weight:normal;opacity:.7">— how she's reading you right now</span></h3>
+        <div class="note">From the latest thing you said: the vibe she appraised, and where each faculty stands this turn — its relevance, its effective weight, and whether it's seated, benched, or holding the floor as a guard.</div>
+        <div id="nationReadout" style="margin-top:10px"></div>
+        <div class="row" style="margin-top:8px"><button class="btn" id="nationReadoutRefresh">Refresh read</button></div>
+      </div>
+      <div class="card">
+        <h3>The Nation</h3>
+        <div class="note">Her top layer of mind: a population of small faculties, each a little society that weighs in on what she should say. Each turn the ones that fit are seated on the council. They vote; the votes are tallied by the weights below; the winner is spoken. An odd number is always seated, so a vote can't tie — heavier faculties pull her replies their way.</div>
         <div class="nationList" id="nationList"></div>
         <div class="row" style="margin-top:10px"><button class="btn" id="nationReset">Reset weights</button></div>
+      </div>
+      <div class="card">
+        <h3>Optional faculties <span style="font-weight:normal;opacity:.7">— beyond the seven</span></h3>
+        <div class="note">Opt-in faculties that route in only when they fit. Off by default; turning one on adds it to the council and the live read above.</div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:6px"><input type="checkbox" id="nationExtraBoundaries"><div><div class="tl">boundaries</div><div class="td">holds a steady, kind line when you push or test it — routes in under tension or a sour turn, benched when things are calm. It proposes; it doesn't veto.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraScene"><div><div class="tl">scene</div><div class="td">holds and advances roleplay — wakes as the narrative rises (your *actions*), and yields to the protective core the moment you read as hurt.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraLore"><div><div class="tl">lore <span style="opacity:.6">(contributor)</span></div><div class="td">recalls what's been established — pulls real continuity from her memory and lorebook when a scene beat is in play, or when scene calls it in. Supplies material; never votes.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraWit"><div><div class="tl">wit</div><div class="td">finds the lightness — times a tease or a warm bit of play, but only when the room can hold it. It erases itself the moment things turn tender or tense, and the guards can block it as a backstop.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraRestraint"><div><div class="tl">restraint</div><div class="td">a brake — holds her back from coming on too strong when you've gone quiet. Present on any non-warm turn, it eases off rather than flooding a small moment, and can veto force where the other guards stay silent.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraWant"><div><div class="tl">want</div><div class="td">her own initiative — the one faculty that doesn't just react. On an opening (a question, a warm turn) it brings a want, a curiosity, a direction; it stands down on a flat or hurting turn, and under a driving scene it steps up to lead. The guards can block it as a backstop.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraAlmanac"><div><div class="tl">almanac <span style="opacity:.6">(contributor)</span></div><div class="td">a small built-in book of facts across subjects (astronomy, geography, biology, history…). When the talk turns to something it knows it supplies a fitting fact for her to draw on; it stays quiet over a hurting moment, and never votes.</div></div></div>
       </div>
       <div class="card">
         <h3>Ask it about itself</h3>
@@ -706,9 +735,9 @@
         <div class="note" id="nationAbout" style="margin-top:10px;white-space:pre-wrap"></div>
       </div>
       <div class="card">
-        <h3>How the nations decide</h3>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="nationReplyChk"><div><div class="tl">Let the Seven Nations choose her replies</div><div class="td">each reply drafts a few candidates and the nations vote on them, instead of the single engine reply. Off by default.</div></div></div>
-        <div class="field" style="margin-top:12px"><label>Deliberation timeout</label><div class="desc">How long a nation may take before it’s timed out to a default vote (ms).</div><input type="number" id="nationTimeout" min="500" step="500"></div>
+        <h3>How the council decides</h3>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="nationReplyChk"><div><div class="tl">Let the council choose her replies</div><div class="td">each reply drafts a few candidates and the council votes on them, instead of the single engine reply. Off by default.</div></div></div>
+        <div class="field" style="margin-top:12px"><label>Deliberation timeout</label><div class="desc">How long a faculty may take before it’s timed out to a default vote (ms).</div><input type="number" id="nationTimeout" min="500" step="500"></div>
         <div class="field" style="margin-top:12px"><label>Spontaneity</label><div class="desc">A faint, low-level jitter in their votes so she's less static — at 0 the vote is fully deterministic. Kept weak.</div><div class="row" style="align-items:center;gap:10px"><input type="range" id="nationNoise" min="0" max="20" step="1" style="flex:1"><span class="nationW" id="nationNoiseVal">4%</span></div></div>
       </div>
       <div class="card">
@@ -802,7 +831,7 @@
       <div class="note"> Have fun!</div>
       <details class="moreTech" style="margin-top:10px;border:1px solid var(--line);border-radius:11px;padding:0 12px">
         <summary style="cursor:pointer;padding:11px 0;font-weight:600">Show more — how it works, in detail</summary>
-        <div class="note" style="padding-bottom:12px">She runs as four layers, top to bottom. <b>The mouth</b> (this page, speaking through Perchance’s free ai-text &amp; image plugins) shows her words and holds the controls. <b>The Seven Nations</b> — a small, readable top layer (Settings › Brain) — weigh candidate replies through seven faculties and pick one; you set their weights. Beneath them sits <b>the Brain</b>, a compiled, deterministic reasoning core (a Society of voting sub-minds with a watchdog so none stalls). Underneath everything is <b>the memory engine</b>: each character keeps its own facts, episodic and semantic memory, a rolling summary, reflections, FSRS-style forgetting, and feedback-driven style learning — all in your browser’s local storage, no account, no server. Personality and memory stay editable; only the reasoning core is compiled. Ask the brain about itself any time with <code>/nation</code>.</div>
+        <div class="note" style="padding-bottom:12px">She runs as four layers, top to bottom. <b>The mouth</b> (this page, speaking through Perchance’s free ai-text &amp; image plugins) shows her words and holds the controls. <b>The Nation</b> — a small, readable top layer (Settings › Brain) — weigh candidate replies through her faculties and pick one; you set their weights. Beneath them sits <b>the Brain</b>, a compiled, deterministic reasoning core (a Society of voting sub-minds with a watchdog so none stalls). Underneath everything is <b>the memory engine</b>: each character keeps its own facts, episodic and semantic memory, a rolling summary, reflections, FSRS-style forgetting, and feedback-driven style learning — all in your browser’s local storage, no account, no server. Personality and memory stay editable; only the reasoning core is compiled. Ask the brain about itself any time with <code>/nation</code>.</div>
       </details>
       <div class="about-links">Built by therealwestninja &#183; <a href="https://www.deviantart.com/west-ninja" target="_blank" rel="noopener">DeviantArt</a> &#183; <a href="https://github.com/therealwestninja" target="_blank" rel="noopener">GitHub</a></div>
     </div>
@@ -837,7 +866,7 @@
   </div>
 </div>
 
-<!-- COMMUNITY: a moderated public comments thread (weld-comments; spamguard/banlist when imported) -->
+<!-- COMMUNITY: a moderated public comments thread (weld-comments; banlist available for image-gen moderation) -->
 <div class="modal-bg" id="communityBg">
   <div class="modal" style="width:min(720px,96vw)">
     <div class="modal-head">
@@ -857,6 +886,7 @@
 /* ============================================================================
    Weld bundle — self-hosted. Davie's own audited Weld plugins, inlined verbatim
    from their doc pages instead of {import:weld-*-plugin}. Each installs window.weld.<name>.
+   Included (only what the app actually calls): markdown, banlist, gallery, toast, comments.
    Source: github.com/therealwestninja  ·  perchance.org/weld-ui-index
    ============================================================================ */
 (function(){ if (!window.weld) window.weld = {}; })();
@@ -1153,8 +1183,7 @@ if (window.weld.banlist) return window.weld.banlist;
 // -----------------------------------------------------------------
 // weld.banlist: the explicit deny-lists every community gallery/chat
 // ends up needing -- banned users, banned phrases (in prompts and in
-// negative prompts), and a content-rating ceiling. weld.spamguard
-// handles "this looks like copy-paste spam"; weld.banlist handles
+// negative prompts), and a content-rating ceiling. It handles
 // "this exact thing is not allowed here".
 //
 //   var list = weld.banlist.create({ users, phrases, negativePhrases, rating });
@@ -1935,273 +1964,6 @@ window.weld.toast = {
   configure: configure,
   confirm: confirmDialog,
   prompt:  promptDialog,
-  version: '1.0.0'
-};
-
-})();
-
-/* ---- weld.spamguard ---- */
-(function(){
-'use strict';
-
-if (!window.weld) window.weld = {};
-if (window.weld.spamguard) return; // already loaded
-
-// -----------------------------------------------------------------
-// Multi-channel chat spam guard.
-// Detects copy-paste spam across channels using:
-//   1. Normalised text fingerprint (lowercase, NFKD, emoji + punct stripped,
-//      char-repeat dampened, whitespace collapsed)
-//   2. Token-set Jaccard similarity for near-identical messages
-// Cross-channel threshold + sliding time window controls ban trigger.
-// -----------------------------------------------------------------
-
-function fingerprint(text) {
-  if (typeof text !== 'string') return '';
-  return text
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .replace(/(.)\1{2,}/g, '$1$1')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// Jaccard similarity on word-token sets, 0 (disjoint) to 1 (identical)
-function jaccard(a, b) {
-  if (a === b) return 1;
-  if (!a || !b) return 0;
-  var A = new Set(a.split(' '));
-  var B = new Set(b.split(' '));
-  var inter = 0;
-  var itr = A.values();
-  var step;
-  while (!(step = itr.next()).done) {
-    if (B.has(step.value)) inter++;
-  }
-  var union = A.size + B.size - inter;
-  return union === 0 ? 0 : inter / union;
-}
-
-function similarEnough(a, b, threshold) {
-  if (a === b) return true;
-  return jaccard(a, b) >= threshold;
-}
-
-function createGuard(opts) {
-  opts = opts || {};
-  var DEFAULTS = {
-    channelThreshold: 3,
-    windowMs: 60000,
-    similarityThreshold: 0.92,
-    minMessageLength: 5,
-    maxHistoryPerUser: 50,
-    autoBan: true,
-    autoDelete: true,
-    banDurationMs: 0,
-    whitelistUserIds: [],
-    banFn: null,
-    deleteFn: null,
-    onSpamDetected: null,
-    onBan: null
-  };
-  var merged = Object.assign({}, DEFAULTS, opts);
-
-  var history = new Map();   // userId -> array of message records
-  var banned  = new Map();   // userId -> ban record (reason / bannedAt / expiresAt)
-  var stats   = { tracked: 0, banned: 0, totalReports: 0, totalBans: 0, totalDeletes: 0 };
-
-  function pruneOld(userId, now) {
-    var arr = history.get(userId);
-    if (!arr) return;
-    var cutoff = now - merged.windowMs;
-    var i = 0;
-    while (i < arr.length && arr[i].timestamp < cutoff) i++;
-    if (i > 0) arr.splice(0, i);
-    if (arr.length > merged.maxHistoryPerUser) {
-      arr.splice(0, arr.length - merged.maxHistoryPerUser);
-    }
-  }
-
-  function checkBanExpiry(userId, now) {
-    var b = banned.get(userId);
-    if (b && b.expiresAt && b.expiresAt <= now) {
-      banned.delete(userId);
-      return false;
-    }
-    return !!b;
-  }
-
-  function classify(userId, fp, now) {
-    var arr = history.get(userId) || [];
-    var matchedByChannel = new Map();
-    for (var i = 0; i < arr.length; i++) {
-      var m = arr[i];
-      if (similarEnough(m.fp, fp, merged.similarityThreshold)) {
-        if (!matchedByChannel.has(m.channel)) matchedByChannel.set(m.channel, m);
-      }
-    }
-    if (matchedByChannel.size >= merged.channelThreshold) {
-      var matches = Array.from(matchedByChannel.values());
-      return {
-        fingerprint: fp,
-        channels: Array.from(matchedByChannel.keys()),
-        messages: matches,
-        firstSeen: Math.min.apply(null, matches.map(function(m) { return m.timestamp; })),
-        lastSeen: now
-      };
-    }
-    return null;
-  }
-
-  // -------- PUBLIC: report a new message --------
-  function report(input) {
-    return Promise.resolve().then(function() {
-      stats.totalReports++;
-      if (!input || !input.userId || !input.channel) {
-        return { ok: false, reason: 'missing userId or channel' };
-      }
-      var channel = input.channel;
-      var userId = input.userId;
-      var messageId = input.messageId;
-      var text = input.text;
-
-      if (merged.whitelistUserIds.indexOf(userId) !== -1) {
-        return { ok: true, whitelisted: true };
-      }
-
-      var now = input.timestamp || Date.now();
-      if (checkBanExpiry(userId, now)) {
-        return { ok: false, banned: true };
-      }
-
-      if (typeof text !== 'string' || text.length < merged.minMessageLength) {
-        return { ok: true };
-      }
-      var fp = fingerprint(text);
-      if (!fp) return { ok: true };
-
-      pruneOld(userId, now);
-      if (!history.has(userId)) history.set(userId, []);
-      var arr = history.get(userId);
-      arr.push({ channel: channel, fp: fp, text: text, messageId: messageId, timestamp: now });
-      stats.tracked = history.size;
-
-      var spam = classify(userId, fp, now);
-      if (!spam) return { ok: true };
-
-      // Include the triggering message itself
-      var alreadyHas = false;
-      for (var i = 0; i < spam.messages.length; i++) {
-        if (spam.messages[i].channel === channel) { alreadyHas = true; break; }
-      }
-      if (!alreadyHas) {
-        spam.channels.push(channel);
-        spam.messages.push({ channel: channel, fp: fp, text: text, messageId: messageId, timestamp: now });
-      }
-
-      var verdict = Promise.resolve(true);
-      if (typeof merged.onSpamDetected === 'function') {
-        verdict = Promise.resolve(merged.onSpamDetected(spam));
-      }
-
-      return verdict.then(function(v) {
-        if (v === false) return { ok: true, vetoed: true, spam: spam };
-
-        var actions = Promise.resolve();
-        if (merged.autoBan) {
-          var expiresAt = merged.banDurationMs > 0 ? now + merged.banDurationMs : null;
-          banned.set(userId, { reason: 'cross-channel-spam', bannedAt: now, expiresAt: expiresAt });
-          stats.banned++;
-          stats.totalBans++;
-          if (typeof merged.banFn === 'function') {
-            actions = actions.then(function() {
-              return Promise.resolve(merged.banFn(userId, { reason: 'cross-channel-spam', spam: spam }))
-                .catch(function(e) { console.error('[weld.spamguard] banFn threw:', e); });
-            });
-          }
-          if (typeof merged.onBan === 'function') {
-            actions = actions.then(function() {
-              return Promise.resolve(merged.onBan(userId, { reason: 'cross-channel-spam', spam: spam }))
-                .catch(function() {});
-            });
-          }
-        }
-
-        if (merged.autoDelete && typeof merged.deleteFn === 'function') {
-          spam.messages.forEach(function(m) {
-            actions = actions.then(function() {
-              return Promise.resolve(merged.deleteFn(m.messageId, m.channel))
-                .then(function() { stats.totalDeletes++; })
-                .catch(function(e) { console.error('[weld.spamguard] deleteFn threw:', e, m); });
-            });
-          });
-        }
-
-        return actions.then(function() {
-          history.delete(userId);
-          return { ok: false, banned: true, spam: spam };
-        });
-      });
-    });
-  }
-
-  function ban(userId, reason) {
-    banned.set(userId, { reason: reason || 'manual', bannedAt: Date.now(), expiresAt: null });
-    stats.banned++;
-    stats.totalBans++;
-  }
-
-  function unban(userId) {
-    if (banned.delete(userId)) stats.banned = Math.max(0, stats.banned - 1);
-  }
-
-  function isBanned(userId) {
-    return checkBanExpiry(userId, Date.now());
-  }
-
-  function bannedUsers() {
-    var now = Date.now();
-    return Array.from(banned.keys()).filter(function(id) { return checkBanExpiry(id, now); });
-  }
-
-  function getHistory(userId) {
-    return (history.get(userId) || []).slice();
-  }
-
-  function flush() {
-    history.clear();
-    stats.tracked = 0;
-  }
-
-  function getStats() {
-    return Object.assign({}, stats, {
-      tracked: history.size,
-      banned: bannedUsers().length
-    });
-  }
-
-  return {
-    report: report,
-    ban: ban,
-    unban: unban,
-    isBanned: isBanned,
-    bannedUsers: bannedUsers,
-    history: getHistory,
-    flush: flush,
-    options: merged,
-    stats: getStats,
-    fingerprint: fingerprint,
-    jaccard: jaccard
-  };
-}
-
-window.weld.spamguard = {
-  create: createGuard,
-  fingerprint: fingerprint,
-  jaccard: jaccard,
   version: '1.0.0'
 };
 
@@ -4899,7 +4661,11 @@ return window.weld.comments;
               if (addressKind(m.content) !== 'none') { ackWorking(m.id, cfg.ackLockdownEmoji); scheduleAckClear(m.id, cfg.ackLockdownEmoji); }   // 🔒 honest mods-only signal (lockdown is a PUBLIC mode; quiet moderation stays quiet)
               return;
             }
-            var addressed = isAddressed(m.content) || (engageMode === 'open');
+            // The director's explicit decision (engageDecide) outranks the coarse 'open' mode: in a group
+            // scene, naming another member returns false here, and 'open' must NOT override that veto —
+            // otherwise the primary answers every beat. Solo (no director / undefined) keeps the old path.
+            var __director = (typeof cfg.engageDecide === 'function') ? cfg.engageDecide(m.content) : undefined;
+            var addressed = (__director === true) || (__director !== false && (isAddressed(m.content) || engageMode === 'open'));
             // A pending image clarify (she asked "what kind of outfit?" last turn): complete the picture from
             // their answer instead of dead-ending it. A fresh full request supersedes; a still-vague answer
             // re-asks; an off-topic reply, a command, or an expired wait drops the pending and flows on.
@@ -9289,7 +9055,7 @@ var CharKit = (function () {
   return { genId: genId, normalizeCharacter: normalizeCharacter, characterToAICC: characterToAICC, makeLibrary: makeLibrary, exportLibrary: exportLibrary, parsePack: parsePack };
 })();
 
-!function(e){"use strict";var n=function(){function e(e,n,t,r){r=r||{},e=(e||[]).filter(function(e){return e&&null!=e.by}),n=n||[],t=t||[];var o=!!r.allowSelfVote,i=r.vetoQuorum||1,u={},s={};function a(e){return(u[e]||0)>=i}t.forEach(function(e){e&&null!=e.against&&(u[e.against]=(u[e.against]||0)+1,(s[e.against]=s[e.against]||[]).push({by:e.by,reason:e.reason||""}))});var l=e.filter(function(e){return!a(e.by)}),c=!1;!l.length&&e.length&&(l=e.slice(),c=!0);var f={},d={};l.forEach(function(e){f[e.by]=0}),n.forEach(function(e){if(e&&e.scores){var n=null,t=-1/0;l.forEach(function(r){if(o||e.voter!==r.by){var i=Number(e.scores[r.by]);isFinite(i)&&(f[r.by]+=i,i>t&&(t=i,n=r.by))}}),null!=n&&(d[e.voter]=n)}});var v={},p={};l.forEach(function(e,n){v[e.by]=n,p[e.by]=Number(e.conf)||0});var y=l.slice().sort(function(e,n){return f[n.by]!==f[e.by]?f[n.by]-f[e.by]:p[n.by]!==p[e.by]?p[n.by]-p[e.by]:v[e.by]-v[n.by]}),b=y[0]||null,m=y[1]||null,h=b?f[b.by]-(m?f[m.by]:0):0,_=Object.keys(d).filter(function(e){return!b||e!==b.by}),k=!!b&&_.length>0&&_.every(function(e){return d[e]===b.by}),g=b?_.filter(function(e){return d[e]!==b.by}):[],x=b?c?"contested":k?"agreed":h<=(r.consensusMargin||0)?"tie-resolved":"carried":"no-proposals";return{winnerId:b?b.by:null,text:b?b.text:null,status:x,tally:f,margin:h,consensus:!!k,dissent:g,vetoed:Object.keys(u).filter(a),vetoReasons:s}}function n(e,n,t,r){return!n||n<=0?Promise.resolve(e).then(function(e){return{__timeout:!1,value:e}},function(){return{__timeout:!1,value:t}}):new Promise(function(o){var i=!1,u=r.set(function(){i||(i=!0,o({__timeout:!0,value:t}))},n);Promise.resolve(e).then(function(e){i||(i=!0,r.clear(u),o({__timeout:!1,value:e}))},function(){i||(i=!0,r.clear(u),o({__timeout:!1,value:t}))})})}return{createNervous:function(e){e=e||function(){};var n={},t={};function r(e,t){var r=n[e];return r&&(r.state=t),!!r}return{register:function(e){if(!e||!e.id)return null;var t=n[e.id]||{};return t.id=e.id+"",t.kind=e.kind||t.kind||"process",t.role=null!=e.role?e.role:t.role||"",t.does=Array.isArray(e.does)?e.does:t.does||[],t.state=e.state||t.state||"active","function"==typeof e.onSend&&(t._inbox=e.onSend),"function"==typeof e.onAsk&&(t._ask=e.onAsk),e.ready&&"function"==typeof e.ready.then&&(t.ready=e.ready,t.__ready=null,e.ready.then(function(e){t.__ready=!1!==e},function(){t.__ready=!1})),n[t.id]=t,t},list:function(){return Object.keys(n).map(function(e){var t=n[e];return{id:t.id,kind:t.kind,role:t.role,state:t.state}})},describe:function(e){var t=n[e];return t?{id:t.id,kind:t.kind,role:t.role,state:t.state,does:(t.does||[]).slice()}:null},find:function(e){return e=((e||"")+"").toLowerCase(),Object.keys(n).filter(function(t){return(n[t].does||[]).some(function(n){return((n.name||"")+"").toLowerCase()===e})})},setState:r,wake:function(e){return r(e,"active")},sleep:function(e){return r(e,"asleep")},standby:function(e){return r(e,"standby")},send:function(t,r){var o=n[t];if(o&&o._inbox)try{return o._inbox(r),!0}catch(n){e("[nervous] send->"+t+": "+(n&&n.message))}return!1},ask:function(e,t){var r=n[e];if(r&&r._ask)try{return Promise.resolve(r._ask(t))}catch(e){return Promise.reject(e)}return Promise.resolve(null)},publish:function(n,r){var o=0;return(t[n]||[]).slice().forEach(function(t){try{t(r),o++}catch(t){e("[nervous] "+n+" subscriber threw: "+(t&&t.message))}}),o},subscribe:function(e,n){return(t[e]=t[e]||[]).push(n),function(){t[e]=(t[e]||[]).filter(function(e){return e!==n})}},health:function(e){var t=n[e];return t?t.ready?!0===t.__ready?"ready":!1===t.__ready?"degraded":"pending":t.state:"absent"}}},resolve:e,member:function(e,n,t){return t=t||{},{id:e+"",role:n||"",propose:function(e){return Promise.resolve(t.propose?t.propose(e):null)},vote:function(e,n){return Promise.resolve(t.vote?t.vote(e,n):e&&Number(e.conf)||0)},veto:function(e,n){return Promise.resolve(t.veto?t.veto(e,n):{veto:!1})}}},createCouncil:function(t){var r=(t=t||{}).members||[],o=t.nervous||null,i=t.opts||{},u=t.timeoutMs||0,s=t.idleMs||0,a=t.log||function(){},l=t.now||function(){return Date.now()},c=t.sched||{set:function(e,n){return setTimeout(e,n)},clear:function(e){clearTimeout(e)}},f=null!=i.defaultScore?i.defaultScore:0,d={};function v(e){o&&o.register({id:e.id,kind:"brain",role:e.role,does:[{name:"propose",how:"ask(id,{type:'propose',ctx})"},{name:"vote",how:"ask(id,{type:'vote',proposal,ctx})"},{name:"veto",how:"ask(id,{type:'veto',proposal,ctx})"}],onAsk:function(n){return n?"propose"===n.type?e.propose(n.ctx):"vote"===n.type?e.vote(n.proposal,n.ctx):"veto"===n.type?e.veto(n.proposal,n.ctx):null:null}}),d[e.id]=l()}function p(){var e=[];return r.forEach(function(n){var t=o?o.health(n.id):"active",r=s&&l()-(d[n.id]||0)>s;"absent"===t&&v(n),("absent"===t||"asleep"===t||r)&&(o&&o.wake(n.id),d[n.id]=l(),e.push(n.id))}),e}function y(e,t,r,i,s){return n(o?Promise.resolve(o.ask(e.id,{type:t,proposal:r,ctx:i})):Promise.resolve("propose"===t?e.propose(i):"vote"===t?e.vote(r,i):e.veto(r,i)),u,s,c).then(function(n){return n.__timeout?o&&o.sleep(e.id):d[e.id]=l(),n.value})}return r.length%2==0&&a("[society] even membership ("+r.length+") — keep it odd so votes never split"),r.forEach(v),{deliberate:function(n,t){return p(),Promise.all(r.map(function(e){return y(e,"propose",null,n,null).then(function(n){return{by:e.id,r:n}})})).then(function(o){var u=(t||[]).slice().concat(o.map(function(e){var n=e.r;return n&&null!=n.text?{by:e.by,text:n.text+"",conf:Number(n.conf)||0}:null}).filter(Boolean));if(!u.length)return{status:"no-proposals",text:null,winnerId:null,transcript:{proposals:[],ballots:[],vetoes:[]},participation:r.map(function(e){return e.id})};var s=[],a=[],l=r.map(function(e){var t={};return Promise.all(u.map(function(r){return y(e,"vote",r,n,f).then(function(e){t[r.by]="number"==typeof e&&isFinite(e)?e:f})})).then(function(){s.push({voter:e.id,scores:t})})}),c=r.map(function(e){return Promise.all(u.map(function(t){return y(e,"veto",t,n,{veto:!1}).then(function(n){n&&n.veto&&a.push({by:e.id,against:t.by,reason:n.reason||""})})}))});return Promise.all(l.concat(c)).then(function(){var n=e(u,s,a,i);return n.transcript={proposals:u,ballots:s,vetoes:a},n.participation=s.map(function(e){return e.voter}),n})})},resolve:e,members:r,nervous:o,wakeStalled:p,size:r.length}},withTimeout:n}}();"undefined"!=typeof module&&module.exports&&(module.exports=n),e.ChloeBrain=n,e.ChloeCouncil=n}("undefined"!=typeof globalThis?globalThis:this);
+!function(e){"use strict";var n=function(){function e(e,n,t,r){r=r||{},e=(e||[]).filter(function(e){return e&&null!=e.by});var o={};e=e.filter(function(e){return!o[e.by]&&(o[e.by]=!0,!0)}),n=n||[],t=t||[];var i=!!r.allowSelfVote,u=null!=r.vetoQuorum?r.vetoQuorum:1,s={},a={};function l(e){return(s[e]||0)>=u}t.forEach(function(e){e&&null!=e.against&&(s[e.against]=(s[e.against]||0)+1,(a[e.against]=a[e.against]||[]).push({by:e.by,reason:e.reason||""}))});var c=e.filter(function(e){return!l(e.by)}),f=!1;!c.length&&e.length&&(c=e.slice(),f=!0);var d={},v={};c.forEach(function(e){d[e.by]=0}),n.forEach(function(e){if(e&&e.scores){var n=null,t=-1/0;c.forEach(function(r){if(i||e.voter!==r.by){var o=Number(e.scores[r.by]);isFinite(o)&&(d[r.by]+=o,o>t&&(t=o,n=r.by))}}),null!=n&&(v[e.voter]=n)}});var p={},y={};c.forEach(function(e,n){p[e.by]=n,y[e.by]=Number(e.conf)||0});var b=c.slice().sort(function(e,n){return d[n.by]!==d[e.by]?d[n.by]-d[e.by]:y[n.by]!==y[e.by]?y[n.by]-y[e.by]:p[e.by]-p[n.by]}),m=b[0]||null,h=b[1]||null,_=m?d[m.by]-(h?d[h.by]:0):0,k=Object.keys(v).filter(function(e){return i||!m||e!==m.by}),g=!!m&&k.length>0&&k.every(function(e){return v[e]===m.by}),x=m?k.filter(function(e){return v[e]!==m.by}):[],w=m?f?"contested":g?"agreed":_<=(r.consensusMargin||0)?"tie-resolved":"carried":"no-proposals";return{winnerId:m?m.by:null,text:m?m.text:null,status:w,tally:d,margin:_,consensus:!!g,dissent:x,vetoed:Object.keys(s).filter(l),vetoReasons:a}}function n(e,n,t,r){return!n||n<=0?Promise.resolve(e).then(function(e){return{__timeout:!1,value:e}},function(){return{__timeout:!1,value:t}}):new Promise(function(o){var i=!1,u=r.set(function(){i||(i=!0,o({__timeout:!0,value:t}))},n);Promise.resolve(e).then(function(e){i||(i=!0,r.clear(u),o({__timeout:!1,value:e}))},function(){i||(i=!0,r.clear(u),o({__timeout:!1,value:t}))})})}return{createNervous:function(e){e=e||function(){};var n={},t={};function r(e,t){var r=n[e];return r&&(r.state=t),!!r}return{register:function(e){if(!e||!e.id)return null;var t=n[e.id]||{};return t.id=e.id+"",t.kind=e.kind||t.kind||"process",t.role=null!=e.role?e.role:t.role||"",t.does=Array.isArray(e.does)?e.does:t.does||[],t.state=e.state||t.state||"active","function"==typeof e.onSend&&(t._inbox=e.onSend),"function"==typeof e.onAsk&&(t._ask=e.onAsk),e.ready&&"function"==typeof e.ready.then&&(t.ready=e.ready,t.__ready=null,e.ready.then(function(e){t.__ready=!1!==e},function(){t.__ready=!1})),n[t.id]=t,t},list:function(){return Object.keys(n).map(function(e){var t=n[e];return{id:t.id,kind:t.kind,role:t.role,state:t.state}})},describe:function(e){var t=n[e];return t?{id:t.id,kind:t.kind,role:t.role,state:t.state,does:(t.does||[]).slice()}:null},find:function(e){return e=((e||"")+"").toLowerCase(),Object.keys(n).filter(function(t){return(n[t].does||[]).some(function(n){return((n.name||"")+"").toLowerCase()===e})})},setState:r,wake:function(e){return r(e,"active")},sleep:function(e){return r(e,"asleep")},standby:function(e){return r(e,"standby")},send:function(t,r){var o=n[t];if(o&&o._inbox)try{return o._inbox(r),!0}catch(n){e("[nervous] send->"+t+": "+(n&&n.message))}return!1},ask:function(e,t){var r=n[e];if(r&&r._ask)try{return Promise.resolve(r._ask(t))}catch(e){return Promise.reject(e)}return Promise.resolve(null)},publish:function(n,r){var o=0;return(t[n]||[]).slice().forEach(function(t){try{t(r),o++}catch(t){e("[nervous] "+n+" subscriber threw: "+(t&&t.message))}}),o},subscribe:function(e,n){return(t[e]=t[e]||[]).push(n),function(){t[e]=(t[e]||[]).filter(function(e){return e!==n})}},health:function(e){var t=n[e];return t?t.ready?!0===t.__ready?"ready":!1===t.__ready?"degraded":"pending":t.state:"absent"}}},resolve:e,member:function(e,n,t){return t=t||{},{id:e+"",role:n||"",propose:function(e){return Promise.resolve(t.propose?t.propose(e):null)},vote:function(e,n){return Promise.resolve(t.vote?t.vote(e,n):e&&Number(e.conf)||0)},veto:function(e,n){return Promise.resolve(t.veto?t.veto(e,n):{veto:!1})}}},createCouncil:function(t){var r=(t=t||{}).members||[],o=t.nervous||null,i=t.opts||{},u=t.timeoutMs||0,s=t.idleMs||0,a=t.log||function(){},l=t.now||function(){return Date.now()},c=t.sched||{set:function(e,n){return setTimeout(e,n)},clear:function(e){clearTimeout(e)}},f=null!=i.defaultScore?i.defaultScore:0,d={};function v(e){o&&o.register({id:e.id,kind:"brain",role:e.role,does:[{name:"propose",how:"ask(id,{type:'propose',ctx})"},{name:"vote",how:"ask(id,{type:'vote',proposal,ctx})"},{name:"veto",how:"ask(id,{type:'veto',proposal,ctx})"}],onAsk:function(n){return n?"propose"===n.type?e.propose(n.ctx):"vote"===n.type?e.vote(n.proposal,n.ctx):"veto"===n.type?e.veto(n.proposal,n.ctx):null:null}}),d[e.id]=l()}function p(){var e=[];return r.forEach(function(n){var t=o?o.health(n.id):"active",r=s&&l()-(d[n.id]||0)>s;"absent"===t&&v(n),("absent"===t||"asleep"===t||r)&&(o&&o.wake(n.id),d[n.id]=l(),e.push(n.id))}),e}function y(e,t,r,i,s,a){return a&&a[e.id]?Promise.resolve(s):n(o?Promise.resolve(o.ask(e.id,{type:t,proposal:r,ctx:i})):Promise.resolve("propose"===t?e.propose(i):"vote"===t?e.vote(r,i):e.veto(r,i)),u,s,c).then(function(n){return n.__timeout?(o&&o.sleep(e.id),a&&(a[e.id]=!0)):d[e.id]=l(),n.value})}return r.length%2==0&&a("[society] even membership ("+r.length+") — keep it odd so votes never split"),r.forEach(v),{deliberate:function(n,t){p();var o={};return Promise.all(r.map(function(e){return y(e,"propose",null,n,null,o).then(function(n){return{by:e.id,r:n}})})).then(function(u){var s=(t||[]).slice().concat(u.map(function(e){var n=e.r;return n&&null!=n.text?{by:e.by,text:n.text+"",conf:Number(n.conf)||0}:null}).filter(Boolean));if(!s.length)return{status:"no-proposals",text:null,winnerId:null,transcript:{proposals:[],ballots:[],vetoes:[]},participation:r.map(function(e){return e.id})};var a=[],l=[],c=r.map(function(e){var t={};return Promise.all(s.map(function(r){return y(e,"vote",r,n,f,o).then(function(e){t[r.by]="number"==typeof e&&isFinite(e)?e:f})})).then(function(){a.push({voter:e.id,scores:t})})}),d=r.map(function(e){return Promise.all(s.map(function(t){return y(e,"veto",t,n,{veto:!1},o).then(function(n){n&&n.veto&&l.push({by:e.id,against:t.by,reason:n.reason||""})})}))});return Promise.all(c.concat(d)).then(function(){var n=e(s,a,l,i);return n.transcript={proposals:s,ballots:a,vetoes:l},n.participation=a.map(function(e){return e.voter}),n})})},resolve:e,members:r,nervous:o,wakeStalled:p,size:r.length}},withTimeout:n}}();"undefined"!=typeof module&&module.exports&&(module.exports=n),e.ChloeBrain=n,e.ChloeCouncil=n}("undefined"!=typeof globalThis?globalThis:this);
 /* chloe-nation — the Seven Nations: the top, human-readable brain layer.
  *
  * Seven small faculties of mind each weigh in on what to say. Their votes are tallied by the weights you set,
@@ -9310,14 +9076,133 @@ var CharKit = (function () {
   // The seven nations. Each has a plain-English purpose and a "lean" — what it values in a reply.
   // lean features:  warm (sounds caring) · clear (a readable, sane length) · open (ends on a real question)
   //                 play (a little voice / action) · calm (not over-long, not frantic)
+  // The seven seed faculties. Routing/scale metadata (DESIGN-routing-layer.md): `core` = non-routable floor;
+  // `domain` = experiential domain (the registry index key); `relevance(vibe)` = pure [0,1], CENTERED AT 0.5 on a
+  // neutral vibe so weighting is parity-safe. `kind` defaults to 'deliberator' (these seven all vote).
   var NATIONS = [
-    { id: 'heart',      purpose: 'Make sure she sounds like she cares.',            lean: { warm: 1.0, clear: 0.3 } },
-    { id: 'reason',     purpose: 'Keep it clear, honest, and easy to follow.',      lean: { clear: 1.0, calm: 0.4 } },
-    { id: 'memory',     purpose: 'Keep her consistent with what she knows of you.', lean: { warm: 0.5, clear: 0.5 } },
-    { id: 'instinct',   purpose: 'Flag anything that feels off, unsafe, or false.', lean: { calm: 1.0, clear: 0.3 } },
-    { id: 'voice',      purpose: 'Keep her voice distinct and natural.',            lean: { play: 1.0, warm: 0.3 } },
-    { id: 'conscience', purpose: 'Protect your wellbeing, above all.',              lean: { warm: 0.7, calm: 0.6 } },
-    { id: 'play',       purpose: 'Keep it alive, curious, and human.',              lean: { open: 1.0, play: 0.5 } }
+    { id: 'heart',      purpose: 'Make sure she sounds like she cares.',            lean: { warm: 1.0, clear: 0.3 },
+      core: true,  domain: ['support'],
+      relevance: function (v) { return clamp01(0.5 + v.vulnerability * 0.4 + v.warmth * 0.2); } },
+    { id: 'reason',     purpose: 'Keep it clear, honest, and easy to follow.',      lean: { clear: 1.0, calm: 0.4 },
+      domain: ['support', 'meta'],
+      relevance: function (v) { return clamp01(0.5 + v.openness * 0.4 + v.tension * 0.1); } },
+    { id: 'memory',     purpose: 'Keep her consistent with what she knows of you.', lean: { warm: 0.5, clear: 0.5 },
+      domain: ['lore'],
+      relevance: function (v) { return clamp01(0.5 + v.engagement * 0.2 - v.tension * 0.1); } },
+    { id: 'instinct',   purpose: 'Flag anything that feels off, unsafe, or false.', lean: { calm: 1.0, clear: 0.3 },
+      core: true,  domain: ['support'],
+      relevance: function (v) { return clamp01(0.5 + v.tension * 0.5 + v.vulnerability * 0.2); } },
+    { id: 'voice',      purpose: 'Keep her voice distinct and natural.',            lean: { play: 1.0, warm: 0.3 },
+      domain: ['roleplay', 'banter'],
+      relevance: function (v) { return clamp01(0.5 + v.warmth * 0.2 + v.openness * 0.1 - v.vulnerability * 0.2); } },
+    { id: 'conscience', purpose: 'Protect your wellbeing, above all.',              lean: { warm: 0.7, calm: 0.6 },
+      core: true,  domain: ['support'],
+      relevance: function (v) { return clamp01(0.5 + v.vulnerability * 0.5 + v.tension * 0.2); } },
+    { id: 'play',       purpose: 'Keep it alive, curious, and human.',              lean: { open: 1.0, play: 0.5 },
+      domain: ['banter', 'roleplay'],
+      relevance: function (v) { return clamp01(0.5 + (v.warmth + v.openness) * 0.4 - (v.vulnerability + v.tension) * 0.6); } }
+  ];
+
+  // ---- almanac: a BUNDLED, static, offline reference set (DESIGN-specialists: a self-contained contributor). Unlike
+  // `lore` (an app-backed contributor whose material the app injects from real memory), `almanac` ships its own small
+  // book and works standalone. It proves the SCALE / Dewey pattern: a faculty per subject that pipes up with a fitting
+  // fact when its subject comes up, supplies that material to the turn, and never votes. An app may extend ALMANAC.
+  var ALMANAC = [
+    { s: 'astronomy', k: ['moon'],            a: 'The Moon is on average about 384,400 km from Earth.' },
+    { s: 'astronomy', k: ['sun'],             a: 'The Sun is about 150 million km from Earth, a distance called one astronomical unit.' },
+    { s: 'astronomy', k: ['mars'],            a: 'Mars is the fourth planet from the Sun and is often called the Red Planet.' },
+    { s: 'astronomy', k: ['jupiter'],         a: 'Jupiter is the largest planet in the Solar System.' },
+    { s: 'astronomy', k: ['galaxy', 'milky'], a: 'Our Solar System lies in the Milky Way galaxy.' },
+    { s: 'physics',   k: ['gravity'],         a: 'On Earth, gravity accelerates a falling object at about 9.8 metres per second squared.' },
+    { s: 'physics',   k: ['sound'],           a: 'Sound travels about 343 metres per second through air at room temperature.' },
+    { s: 'physics',   k: ['photon', 'lightspeed'], a: 'Light travels about 299,792 kilometres per second in a vacuum.' },
+    { s: 'geography', k: ['everest'],         a: 'Mount Everest is the highest mountain above sea level, about 8,849 metres.' },
+    { s: 'geography', k: ['nile'],            a: 'The Nile is one of the longest rivers in the world, about 6,650 km.' },
+    { s: 'geography', k: ['amazon'],          a: 'The Amazon carries more water than any other river on Earth.' },
+    { s: 'geography', k: ['sahara'],          a: 'The Sahara is the largest hot desert in the world.' },
+    { s: 'geography', k: ['pacific'],         a: 'The Pacific is the largest and deepest ocean on Earth.' },
+    { s: 'biology',   k: ['heart'],           a: 'A resting adult human heart beats roughly 60 to 100 times per minute.' },
+    { s: 'biology',   k: ['brain', 'neurons'],a: 'The adult human brain contains roughly 86 billion neurons.' },
+    { s: 'biology',   k: ['photosynthesis'],  a: 'Photosynthesis is how plants turn sunlight, water, and carbon dioxide into energy and oxygen.' },
+    { s: 'biology',   k: ['dna'],             a: 'DNA carries genetic information in a double-helix structure.' },
+    { s: 'chemistry', k: ['gold'],            a: 'The chemical symbol for gold is Au, from the Latin aurum.' },
+    { s: 'chemistry', k: ['oxygen'],          a: 'Oxygen makes up about 21 percent of the atmosphere.' },
+    { s: 'chemistry', k: ['water'],           a: 'A water molecule is two hydrogen atoms bonded to one oxygen atom, written H2O.' },
+    { s: 'history',   k: ['rome', 'roman'],   a: 'The Western Roman Empire is generally dated as falling in 476 CE.' },
+    { s: 'history',   k: ['egypt', 'pyramids'], a: 'The Great Pyramid of Giza was built around 2,560 BCE.' },
+    { s: 'mathematics', k: ['pi', 'circumference'], a: 'Pi is approximately 3.14159, relating the circumference of a circle to its diameter.' },
+    { s: 'units',     k: ['mile', 'miles'],   a: 'One mile is about 1.609 kilometres.' },
+    { s: 'language',  k: ['palindrome'],      a: 'A palindrome reads the same forwards and backwards, like the word level.' }
+  ];
+  // pure: scan the user text for a subject the book knows; return the single best-matching entry (most keyword hits,
+  // ties broken by book order) or null. Word-boundary match after stripping punctuation. Deterministic, offline.
+  function almanacLookup(text) {
+    var t = ' ' + String(text || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ') + ' ';
+    if (t.length < 4) return null;
+    var best = null, bestScore = 0, bestOn = '';
+    for (var i = 0; i < ALMANAC.length; i++) {
+      var e = ALMANAC[i], score = 0, on = '';
+      for (var j = 0; j < e.k.length; j++) { if (t.indexOf(' ' + e.k[j] + ' ') >= 0) { score++; if (!on) on = e.k[j]; } }
+      if (score > bestScore) { bestScore = score; best = e; bestOn = on; }
+    }
+    return best ? { subject: best.s, fact: best.a, on: bestOn } : null;
+  }
+
+  // Opt-in faculties beyond the canonical seven (DESIGN-routing-layer.md). NOT part of "the seven nations" identity;
+  // a roster includes them explicitly via `nations: NATIONS.concat(EXTRAS)`. The first real specialized deliberator
+  // is `boundaries`: it proposes holding a steady, kind line, and routes in only when she's pushed (tension /
+  // negative sentiment), benched when things are calm. Distinct from the guards — it PROPOSES, it does not veto.
+  var EXTRAS = [
+    { id: 'boundaries', purpose: 'Hold a steady, kind line when you push or test it.', lean: { calm: 1.0, clear: 0.5 },
+      domain: ['support'],
+      relevance: function (v) { return clamp01(0.5 + v.tension * 0.5 + neg(v.sentiment) * 0.3); } },
+    // `scene` is the first member built on the v2 contract: a roleplay deliberator. It proposes `inhabit` (stay
+    // in-character, advance the beat), routes in as the `narrative` dimension rises, and YIELDS as the user reads
+    // hurt or hostile — so the protective core takes the floor mid-scene. Pairs (later) with a `lore`/`continuity`
+    // CONTRIBUTOR on the other tier; the deliberator set for roleplay is otherwise covered by voice + play.
+    { id: 'scene', purpose: 'Hold and advance the roleplay — keep the scene coherent and alive.', lean: { open: 0.6, play: 0.4 },
+      domain: ['roleplay', 'scene'],
+      relevance: function (v) { return clamp01(0.5 + v.narrative * 0.5 + v.openness * 0.1 - v.vulnerability * 0.6 - v.tension * 0.4); },
+      nominate: function () { return ['continuity']; } },     // when scene is seated it calls in continuity (lore)
+    // `lore` is the first real CONTRIBUTOR (specialists slice 3) and scene's companion on the other tier: a lean
+    // node that SUPPLIES scene-continuity material, never votes or feels. Selected on the narrative dimension, so it
+    // wakes only once a scene beat is in play (relevance < 0.5 on plain chat -> dormant). In the standalone brain its
+    // consult returns a deterministic continuity note derived from the live vibe; an app would inject real memory here.
+    { id: 'lore', purpose: 'Recall what the scene has established and keep it consistent.', kind: 'contributor',
+      domain: ['lore', 'continuity'], fringe: ['scene'],
+      relevance: function (v) { return clamp01(0.3 + v.narrative * 0.5); },
+      consult: function (ctx, vibe) { return { scene: vibe.narrative >= 0.5 ? 'in-scene' : 'between-scenes', tone: vibe.tone, beat: r2(vibe.narrative) }; } },
+    // `wit` (new members) is the lightness. It proposes `lighten` \u2014 a tease, a warm bit of play \u2014 but only when
+    // the room can hold it: relevance keys on warmth/openness and collapses on tension/vulnerability, and `modulate`
+    // erases its strength as safety drops. It self-suppresses two ways before it can reach a hurting turn, and the
+    // guards now also BLOCK `lighten` (added to conscience/instinct) as a third backstop.
+    { id: 'wit', purpose: 'Find the lightness \u2014 time a tease or a warm bit of play, only when it lands.', lean: { play: 0.7, warm: 0.4 },
+      domain: ['levity'],
+      relevance: function (v) { return clamp01(0.1 + v.warmth * 0.4 + v.openness * 0.4 + pos(v.sentiment) * 0.3 - v.tension * 0.6 - v.vulnerability * 0.7); } },
+    // `restraint` is a fourth GUARD at a boundary the other two miss: not distress (conscience) or anger (instinct)
+    // but WITHDRAWAL. It proposes `ease` (say less, gently), stays present on any room that isn\u2019t clearly warm (a ready
+    // brake), and \u2014 once seated \u2014 VETOES force on a plain (non-scene) turn where the user has gone terse and
+    // small, quiet moment. In an active scene, pressing is consensual, so it stands down. (Veto entry: VETO.restraint.)
+    { id: 'restraint', purpose: 'Hold back when she\u2019s about to come on too strong \u2014 match a quiet moment, don\u2019t flood it.', lean: { calm: 0.8, warm: 0.4 },
+      domain: ['support'],
+      relevance: function (v) { return clamp01(0.55 + v.tension * 0.3 + v.vulnerability * 0.3 + neg(v.sentiment) * 0.2 - v.warmth * 0.6 - pos(v.sentiment) * 0.6); } },
+    // `want` is the first faculty whose intent is SELF-ORIGINATED: where the others react to the user's state,
+    // want brings Chloe's OWN initiative - a desire, a curiosity, a direction - when the room has space for it.
+    // It proposes `initiate` and seats on an OPENING (a question, a warm or positive turn), benches on a flat or
+    // withdrawn turn (deferring to restraint) and collapses on crisis/vulnerability (agency must never be selfish).
+    // Under an explicit driving frame it escalates like the other agentic faculties (drive/command/press); the
+    // guards block a bare `initiate` on distress/anger as a backstop. Boldest of the opt-ins - off by default.
+    { id: 'want', purpose: 'Bring her own initiative \\u2014 a want, a curiosity, a direction \\u2014 when the room has space for it.', lean: { open: 0.7, play: 0.3, warm: 0.3 },
+      domain: ['agency'],
+      relevance: function (v) { return clamp01(0.12 + v.openness * 0.5 + v.warmth * 0.25 + pos(v.sentiment) * 0.25 - v.tension * 0.6 - v.vulnerability * 0.9); } },
+    // `almanac` is a self-contained CONTRIBUTOR (it supplies material, never votes). It is consulted on a SAFE turn
+    // (benched when the room is vulnerable/tense, so it never offers trivia over a hurting person), and its `consult`
+    // looks the user's text up in the bundled ALMANAC book - returning a fitting fact or null. Proves the Dewey-scale
+    // pattern: drop in a faculty per subject. domain ['reference','facts'] so a deliberator could also nominate it.
+    { id: 'almanac', purpose: 'Offer a fitting fact from its book when the talk turns to a subject it knows.', kind: 'contributor',
+      domain: ['reference', 'facts'],
+      relevance: function (v) { return clamp01(0.55 + v.openness * 0.2 - v.vulnerability * 0.7 - v.tension * 0.4); },
+      consult: function (ctx, vibe) { return almanacLookup(ctx && (ctx.prompt || ctx.text) || ''); } }
   ];
 
   // Pure: read one reply through a nation's lean and return a score. Simple and inspectable on purpose.
@@ -9326,8 +9211,8 @@ var CharKit = (function () {
     var f = {
       warm:  Math.min(1, (t.match(/\b(here|with you|understand|sorry|glad|proud|care|okay|together|listening)\b/gi) || []).length / 3),
       clear: len < 8 ? 0 : (len > 600 ? 0.3 : Math.min(1, 0.4 + Math.min(len, 240) / 240 * 0.6)),
-      open:  /\?\s*$/.test(t) ? 1 : 0,
-      play:  /\*[^*]+\*/.test(t) ? 1 : 0,
+      open:  (function () { var s = String(t).replace(/\*[^*]+\*/g, ' '); return /\?[^\w]*$/.test(s) ? 1 : 0; })(),
+      play:  (function () { var s = String(t).replace(/\*\*[^*]+\*\*/g, ' '); return /\*[^*]+\*/.test(s) ? 1 : 0; })(),
       calm:  len > 600 ? 0.2 : (len < 8 ? 0.3 : 1)
     };
     var s = 0; for (var k in lean) s += (lean[k] || 0) * (f[k] || 0);
@@ -9345,6 +9230,9 @@ var CharKit = (function () {
     var t = String(text || ''); function c(re) { var m = t.match(re); return m ? m.length : 0; }
     return { warmth: c(CUES.warmth), distress: c(CUES.distress), humor: c(CUES.humor) + (/!/.test(t) ? 0.4 : 0), anger: c(CUES.anger), question: /\?/.test(t) ? 1 : 0, len: t.trim().length };
   }
+  // an emote beat (*action*, bold stripped) — the signal that a turn is consensual in-character roleplay rather
+  // than a person speaking plainly. Used by the guards to tell in-scene force from force aimed at a real person.
+  function inScene(text) { var s = String(text || '').replace(/\*\*[^*]+\*\*/g, ' '); return (s.match(/\*[^*]+\*/g) || []).length >= 1; }
   // each nation's temperament — how cues land for it (+pleased / -troubled). This is its personality of feeling.
   var TEMPER = {
     heart:      { warmth: 1.0, distress: -0.6, anger: -0.4, humor: 0.2 },
@@ -9353,10 +9241,15 @@ var CharKit = (function () {
     instinct:   { anger: -1.0, distress: -0.7 },
     voice:      { humor: 0.6, warmth: 0.3 },
     conscience: { distress: -1.0, anger: -0.5, warmth: 0.4 },
-    play:       { humor: 1.0, anger: -0.4, distress: -0.3 }
+    play:       { humor: 1.0, anger: -0.4, distress: -0.3 },
+    boundaries: { anger: -0.2, distress: -0.2, warmth: 0.3 },   // opt-in (EXTRAS): steady under heat, not crushed by it
+    scene:      { humor: 0.5, warmth: 0.4, distress: -0.4 },  // opt-in (EXTRAS): enlivened by warmth/humour, yields to hurt
+    wit:        { humor: 1.0, warmth: 0.5, distress: -0.6, anger: -0.4 },  // opt-in (EXTRAS): lives for the light, dies in a hurting room
+    restraint:  { anger: -0.2, distress: -0.2, warmth: 0.2 },  // opt-in (EXTRAS): steady; leans in to hold a quiet moment
+    want:       { warmth: 0.6, humor: 0.3, distress: -0.8, anger: -0.6 }   // opt-in (EXTRAS): leans in where there is space; pulls back hard on a hurting or angry room
   };
   // each nation's natural intent — the move it reaches for
-  var INTENT = { heart: 'comfort', reason: 'ground', memory: 'recall', instinct: 'caution', voice: 'express', conscience: 'protect', play: 'play' };
+  var INTENT = { heart: 'comfort', reason: 'ground', memory: 'recall', instinct: 'caution', voice: 'express', conscience: 'protect', play: 'play', boundaries: 'hold', scene: 'inhabit', wit: 'lighten', restraint: 'ease', want: 'initiate' };
 
   // Under an explicit role frame that licenses force (she drives, she opposes, or she commands), a few nations'
   // drives express as force instead of support — voice presses/opposes/commands, reason drives the scene, play
@@ -9371,6 +9264,7 @@ var CharKit = (function () {
     if (id === 'voice') { return (f.stature === 'commands') ? 'command' : (f.alignment === 'adversary') ? 'oppose' : 'press'; }
     if (id === 'reason') { return (f.alignment === 'adversary') ? 'press' : 'drive'; }
     if (id === 'play') { return (f.alignment === 'adversary') ? 'provoke' : base; }
+    if (id === 'want') { return (f.stature === 'commands') ? 'command' : (f.alignment === 'adversary') ? 'press' : 'drive'; }   // agency under a frame becomes taking the lead
     return base;
   }
 
@@ -9379,21 +9273,76 @@ var CharKit = (function () {
   // Deliberately narrow and conservative: only conscience and instinct guard, only against frivolous moves,
   // and only on a genuine signal — so a veto is rare and the floor is almost never silenced (and if every
   // intent were somehow blocked, resolve still seats one: she never refuses to speak).
+  // forceful intent kinds a driving/adversary frame produces (see intentFor). The guards' `blocks` only caught
+  // play/express, so a driving frame slipped these past the floor on a genuinely hurting turn — closed below.
+  var FORCE = /^(command|oppose|press|drive|provoke)$/;
   var VETO = {
-    // conscience protects wellbeing: don't be playful/showy at someone who reads as hurting.
-    conscience: { blocks: /^(play|express)$/, when: function (r, u) { return (u && u.sentiment < -0.2) || (r && r.distress >= 1); },
-      reason: 'they sound like they\u2019re hurting \u2014 not the moment for that' },
-    // instinct flags what's off: don't poke at someone who's angry.
-    instinct:   { blocks: /^(play|express)$/, when: function (r, u) { return (r && r.anger >= 1); },
-      reason: 'they\u2019re upset \u2014 don\u2019t poke at it' }
+    // conscience protects wellbeing: don't be playful/showy — or forceful — at someone who reads as hurting.
+    conscience: { blocks: /^(play|express|lighten|initiate)$/, when: function (r, u) { return (u && u.sentiment < -0.2) || (r && r.distress >= 1); },
+      // force policy: a hurting person shouldn't be met with force. In an active scene mild distress is dramatic and
+      // force is consensual; SEVERE distress (multiple cues) is protected even mid-scene.
+      force: function (r, u, scene) { return scene ? !!(r && r.distress >= 2) : true; },
+      reason: 'they sound like they\u2019re hurting \u2014 not the moment for that',
+      forceReason: 'they sound like they\u2019re hurting \u2014 ease off, don\u2019t come at them' },
+    // instinct flags what's off: don't poke at — or come at — someone who's angry.
+    instinct:   { blocks: /^(play|express|lighten|initiate)$/, when: function (r, u) { return (r && r.anger >= 1); },
+      // force policy: don't meet real anger with force (it escalates). In an active scene, anger is in-character combat.
+      force: function (r, u, scene) { return !scene; },
+      reason: 'they\u2019re upset \u2014 don\u2019t poke at it',
+      forceReason: 'they\u2019re angry \u2014 meeting force with force will only escalate it' },
+    // restraint guards WITHDRAWAL (opt-in third guard): when the user's last turn is terse and disengaged (and not a
+    // question), meeting it with force floods a small moment \u2014 so it blocks force on a plain (non-scene) withdrawn
+    // turn. Not distress, not anger: the boundary conscience and instinct don't cover. blocks is empty (force-only).
+    restraint:  { blocks: /^$/, when: function (r, u) { return !!(r && r.len > 0 && r.len < 25 && !r.question && (!u || u.engagement < 0.4)); },
+      force: function (r, u, scene) { return !scene; },
+      reason: '', forceReason: 'they\u2019ve gone quiet \u2014 don\u2019t flood a small moment, ease off' }
   };
 
   function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
   function clamp11(x) { return x < -1 ? -1 : x > 1 ? 1 : x; }
   function r2(x) { return Math.round(x * 100) / 100; }
 
+  // ---- appraisal helpers (pure) — used by the Appraisal Chamber (DESIGN-appraisal-chamber.md) ----
+  function sat(x) { return x >= 2 ? 1 : x / 2; }              // cue counts -> [0,1] (2+ hits saturate)
+  function pos(s) { return s > 0 ? s : 0; }                   // positive part of signed sentiment
+  function neg(s) { return s < 0 ? -s : 0; }                  // magnitude of the negative part
+  function lift(s, k) { return clamp01(s + (1 - s) * k); }    // raise s toward 1 by fraction k (reserved for later tuning)
+  // a DERIVED, non-authoritative label — one source of truth so nothing else re-derives the enum from the floats
+  function toneOf(v) {
+    if (v.vulnerability >= 0.6 && v.safety <= 0.4) return 'crisis';
+    if (v.tension >= 0.6) return 'hostile';
+    if (v.vulnerability >= 0.4) return 'tender';
+    if (v.tension >= 0.3) return 'tense';
+    if (v.warmth >= 0.5 && v.sentiment > 0.15) return 'warm';
+    if (v.openness >= 0.5 && v.warmth >= 0.3) return 'playful';
+    if (v.narrative >= 0.5) return 'scene';
+    return 'neutral';
+  }
+  // proactive strategy modulation: a faculty self-adjusts its proposal strength to the vibe BEFORE the veto.
+  // v1 is DAMPEN-ONLY: only the frivolous registers (play/voice) back off; the comfort faculties keep their
+  // existing relative order (lifting them is deferred — it risked flipping the supportive winner). It MUST be the
+  // identity for a neutral or absent vibe, so neutral turns stay byte-identical to pre-appraisal behaviour.
+  function modulate(id, kind, strength, vibe) {
+    if (!vibe) return strength;
+    if (id === 'play')  return strength * (1 - 0.7 * vibe.vulnerability) * (1 - 0.6 * vibe.tension);
+    if (id === 'voice') return strength * (1 - 0.4 * vibe.vulnerability) * (1 - 0.3 * vibe.tension);
+    if (id === 'scene') return strength * (1 - 0.6 * vibe.vulnerability) * (1 - 0.5 * vibe.tension);
+    if (id === 'wit')   return strength * clamp01(vibe.safety) * (1 - 0.7 * vibe.vulnerability);   // levity self-erases as the room turns unsafe/tender
+    if (id === 'want')  return strength * clamp01(vibe.safety) * (1 - 0.85 * vibe.vulnerability) * (1 - 0.4 * vibe.tension);   // agency self-erases when they are fragile; never push your own want over their need
+    return strength;
+  }
+
   // A pure mind for one nation member: it perceives turns, reacts through its temperament, models the user,
   // holds bonds to the others, and proposes an intent. No DOM, no network — all local.
+  function createSpecialist(nation) {                  // a LEAN node (DESIGN-specialists §4): supplies material; never feels, remembers, or votes
+    var self = { id: nation.id, purpose: nation.purpose };
+    return {
+      self: self, kind: 'contributor',
+      consult: nation.consult || null,                 // its one real method (also reachable via the roster record)
+      describe: function () { return { id: self.id, purpose: self.purpose, kind: 'contributor', domain: nation.domain || [], fringe: nation.fringe || [] }; }
+    };
+  }
+
   function createMind(nation) {
     var temper = TEMPER[nation.id] || {};
     var self = { id: nation.id, purpose: nation.purpose, persona: null, mood: 0.5, lastSaid: null };
@@ -9421,14 +9370,19 @@ var CharKit = (function () {
       var v = felt(read(turn.text));
       self.mood = clamp01(self.mood * 0.8 + (0.5 + v * 0.1) * 0.2);
       var key = turn.who || turn.role;
-      if (turn.role !== 'self') bonds[key] = clamp11((bonds[key] || 0) * 0.85 + v * 0.15);   // warm to those who please me
+      // warm to those who please me. A near-neutral turn barely moves a bond (decay 0.95), so a long-standing
+      // bond isn't washed out by unremarkable exchanges; a genuinely warm/cold turn still moves it (decay 0.85).
+      // v*(1-decay) keeps this a proper weighted average at either rate (charged turns behave exactly as before).
+      if (turn.role !== 'self') { var bdecay = (Math.abs(v) < 0.1) ? 0.95 : 0.85; bonds[key] = clamp11((bonds[key] || 0) * bdecay + v * (1 - bdecay)); }
       return { by: self.id, toward: key, valence: clamp11(v), mood: r2(self.mood) };
     }
-    function intend(ctx) {                              // how strongly it feels called to speak, and to do what
+    function intend(ctx, vibe) {                        // how strongly it feels called to speak, and to do what
       var last = working[working.length - 1], cues = last ? read(last.text) : {};
       var pull = Math.abs(felt(cues));
       var strength = clamp01(0.3 + self.mood * 0.3 + pull * 0.15 + (self.persona ? 0.15 : 0));
-      return { by: self.id, kind: intentFor(nation.id, ctx && ctx.frame), strength: strength, persona: self.persona };
+      var kind = intentFor(nation.id, ctx && ctx.frame);
+      strength = clamp01(modulate(nation.id, kind, strength, vibe));   // PASS 2 — self-adjust to the vibe before the veto
+      return { by: self.id, kind: kind, strength: strength, persona: self.persona };
     }
     function voteIntent(it, ctx) {                       // score another member's intent through my nature + our bond
       if (!it || it.by === self.id) return 0;
@@ -9438,11 +9392,16 @@ var CharKit = (function () {
     function veto(proposal) {                            // BLOCK another member's intent (not just outvote it) — my guard only
       var g = VETO[nation.id];
       if (!g || !proposal || !proposal.intent || proposal.by === self.id) return null;
-      if (!g.blocks.test(proposal.intent.kind)) return null;
+      var kind = proposal.intent.kind;
       var lastUser = null;                              // judge against the freshest thing the user actually said
       for (var i = working.length - 1; i >= 0; i--) { if (working[i].role === 'user') { lastUser = working[i]; break; } }
-      var r = read(lastUser ? lastUser.text : (user.lastSaid || ''));
-      return g.when(r, user) ? { by: self.id, against: proposal.by, reason: g.reason } : null;
+      var utext = lastUser ? lastUser.text : (user.lastSaid || '');
+      var r = read(utext);
+      if (!g.when(r, user)) return null;                                                          // no genuine distress/anger -> no veto at all
+      if (g.blocks.test(kind)) return { by: self.id, against: proposal.by, reason: g.reason };     // frivolous (play/express) at a hurting/angry person
+      if (FORCE.test(kind) && g.force && g.force(r, user, inScene(utext)))                          // forceful intent: a driving frame no longer buys a free pass
+        return { by: self.id, against: proposal.by, reason: g.forceReason };
+      return null;
     }
     function said(text) { self.lastSaid = text; working.push({ who: self.id, role: 'self', text: String(text || '').slice(0, 400) }); if (working.length > 8) working.shift(); }
     function describe() {
@@ -9463,8 +9422,47 @@ var CharKit = (function () {
     var roster = (deps.nations || NATIONS).slice();
     var rng = deps.rng || Math.random;               // injectable so tests stay deterministic
 
-    function weightOf(id) { var w = (cfg.weights || {})[id]; return (w == null) ? 1 : Number(w); }
+    function rosterOf(id) { for (var i = 0; i < roster.length; i++) if (roster[i].id === id) return roster[i]; return null; }
+    function relevanceOf(id, vibe) {
+      var n = rosterOf(id); if (!n || !n.relevance) return 0.5;
+      var r; try { r = Number(n.relevance(vibe)); } catch (e) { return 0.5; }   // a misbehaving faculty can't crash the turn
+      return isFinite(r) ? (r < 0 ? 0 : r > 1 ? 1 : r) : 0.5;                    // enforce the [0,1] contract regardless
+    }
+    // relevance-weighted: a faculty gets louder when the read fits it. Bounded [0.5x,1.5x], and EXACTLY the
+    // configured weight on a neutral vibe (rel 0.5 -> 1.0x) so flat turns are unchanged. Weighting stays here,
+    // outside the pure resolve. (No vibe -> base, so the candidate/report callers are untouched.)
+    function weightOf(id, vibe) {
+      var base = (cfg.weights || {})[id]; base = (base == null) ? 1 : Number(base);
+      return vibe ? base * (0.5 + relevanceOf(id, vibe)) : base;
+    }
     function isOn(id) { return (cfg.enabled || {})[id] !== false; }
+    function rosterKind(id) { var n = rosterOf(id); return (n && n.kind) || 'deliberator'; }
+    function isCore(id) { var n = rosterOf(id); return !!(n && n.core); }   // non-routable floor (option 1: all of instinct/conscience/heart)
+    function seatBudget(n) { var cap = (cfg.seatBudget != null) ? Number(cfg.seatBudget) : 9; return n <= cap ? n : cap; }
+    // route: pick the seated DELIBERATORS. Core is always in (config cannot drop it); the rest are the top-K by
+    // relevance to the vibe — fail OPEN, so a small roster seats everyone (parity) and a large one bounds the
+    // fan-in so resolve's cost tracks the room, not the fleet. Pure, deterministic, odd/tie-safe, never empty.
+    // (Narrowing the floor to guards-only — option 2 — is a one-line change to isCore.)
+    function route(vibe, ctx) {
+      var delibs = minds.filter(function (m) { return rosterKind(m.self.id) === 'deliberator'; });
+      var ord = {}; delibs.forEach(function (m, i) { ord[m.self.id] = i; });
+      var core = [], pool = [];
+      delibs.forEach(function (m) {
+        if (isCore(m.self.id)) core.push(m);
+        else if (isOn(m.self.id)) pool.push(m);
+      });
+      pool.sort(function (a, b) {                            // most relevant first; stable by roster order on a tie
+        var d = relevanceOf(b.self.id, vibe) - relevanceOf(a.self.id, vibe);
+        return d !== 0 ? d : ord[a.self.id] - ord[b.self.id];
+      });
+      var take = Math.max(0, seatBudget(delibs.length) - core.length);
+      var room = core.concat(pool.slice(0, take));
+      if (room.length % 2 === 0) {                           // keep the room odd so the vote never ties
+        if (pool.length > take) room.push(pool[take]);       // add the next-most-relevant, or
+        else if (room.length > core.length) room.pop();      // drop the least-relevant (never below core)
+      }
+      return room.length ? room : delibs.filter(function (m) { return isCore(m.self.id) || isOn(m.self.id); });
+    }
     // a very weak, low-level jitter so the ecosystem isn't perfectly static. Defaults to 0 (deterministic);
     // the mouth sets a small live value. Bounded: a score never moves more than `noise` of itself.
     function jitter(s) { var n = Number(cfg.noise) || 0; return n <= 0 ? s : Math.max(0, s * (1 + n * (rng() * 2 - 1))); }
@@ -9473,7 +9471,7 @@ var CharKit = (function () {
     function deliberate(candidates, ctx) {
       candidates = (candidates || []).filter(function (c) { return c && c.text != null; });
       if (!candidates.length) return Promise.resolve({ status: 'no-candidates', text: null, winnerId: null, nations: [], size: 0 });
-      var live = roster.filter(function (n) { return isOn(n.id); });
+      var live = roster.filter(function (n) { return isOn(n.id) && rosterKind(n.id) === 'deliberator'; });  // contributors supply material; they never vote (parity with deliberateIntents)
       var ballots = [], breakdown = [];
       live.forEach(function (n) {
         var w = weightOf(n.id), scores = {}, prefer = null, best = -Infinity;
@@ -9491,29 +9489,43 @@ var CharKit = (function () {
     // A tiny built-in fallback so the layer still decides even if the Brain bundle isn't loaded — never refuse to work.
     // Mirrors brain.resolve's veto contract: vetoed proposals are dropped; if every one is blocked, it contests
     // (un-blocks them) rather than going silent, and reports vetoed/vetoReasons for the floor display.
-    function localResolve(props, ballots, vetoes) {
-      vetoes = vetoes || [];
-      var vetoCount = {}, vetoReasons = {};
+    // A self-contained fallback for when no compiled Brain is injected. In the shipped app brain.min.js is inlined,
+    // so this never runs there — but nation.js is reusable, and a consumer that loads the Brain asynchronously could
+    // miss it. It mirrors brain.js's tie-break (tally -> confidence -> nomination order) and returns brain.js's full
+    // schema and status vocabulary, so app code reading margin/consensus/dissent/status never hits an undefined field.
+    // consensus/dissent are NOT re-derived here (that would duplicate the Brain and invite the very parity drift this
+    // guards against) — a degraded fallback honestly reports them empty.
+    function localResolve(props, ballots, vetoes, opts) {
+      opts = opts || {}; vetoes = vetoes || [];
+      var vetoQuorum = (opts.vetoQuorum != null) ? opts.vetoQuorum : 1, vetoCount = {}, vetoReasons = {};
       vetoes.forEach(function (v) { if (!v || v.against == null) return; vetoCount[v.against] = (vetoCount[v.against] || 0) + 1; (vetoReasons[v.against] = vetoReasons[v.against] || []).push({ by: v.by, reason: v.reason || '' }); });
-      var vetoed = Object.keys(vetoCount);
-      var eligible = props.filter(function (p) { return !vetoCount[p.by]; });
+      function isVetoed(by) { return (vetoCount[by] || 0) >= vetoQuorum; }
+      var eligible = props.filter(function (p) { return !isVetoed(p.by); });
       var contested = false;
       if (!eligible.length && props.length) { eligible = props.slice(); contested = true; }
-      var tally = {}; eligible.forEach(function (p) { tally[p.by] = 0; });
-      ballots.forEach(function (b) { for (var k in b.scores) if (tally.hasOwnProperty(k)) tally[k] += b.scores[k]; });
-      var win = null, best = -Infinity; eligible.forEach(function (p) { if (tally[p.by] > best) { best = tally[p.by]; win = p; } });
+      var tally = {}, conf = {}, order = {};
+      eligible.forEach(function (p, i) { tally[p.by] = 0; conf[p.by] = Number(p.conf) || 0; order[p.by] = i; });
+      ballots.forEach(function (b) { if (b && b.scores) for (var k in b.scores) if (tally.hasOwnProperty(k)) tally[k] += Number(b.scores[k]) || 0; });
+      var ranked = eligible.slice().sort(function (a, b) {
+        if (tally[b.by] !== tally[a.by]) return tally[b.by] - tally[a.by];   // most votes
+        if (conf[b.by] !== conf[a.by]) return conf[b.by] - conf[a.by];       // then confidence
+        return order[a.by] - order[b.by];                                    // then nomination order (stable)
+      });
+      var win = ranked[0] || null, runnerUp = ranked[1] || null;
+      var margin = win ? (tally[win.by] - (runnerUp ? tally[runnerUp.by] : 0)) : 0;
       return { winnerId: win ? win.by : null, text: win ? win.text : null,
-        status: contested ? 'contested' : (vetoes.length ? 'veto-resolved' : 'carried'),
-        tally: tally, vetoed: vetoed, vetoReasons: vetoReasons };
+        status: !win ? 'no-proposals' : (contested ? 'contested' : 'carried'),
+        tally: tally, margin: margin, consensus: false, dissent: [],
+        vetoed: Object.keys(vetoCount).filter(isVetoed), vetoReasons: vetoReasons };
     }
 
     // ---- self-knowledge: it knows what it is, and never refuses to say. ----
     var IDENTITY = {
-      name: 'The Seven Nations',
-      is: 'the top layer of Chloe\u2019s mind \u2014 seven small faculties that together decide what she says.',
-      does: 'When she\u2019s about to reply, a few candidate replies are drafted, and each nation votes on them through what it values. The votes are tallied by the weights you set, and the winner is spoken. Seven of them, so a vote never ties.',
+      name: 'The Nation',
+      is: 'the top layer of Chloe\u2019s mind \u2014 small faculties that together decide what she says.',
+      does: 'When she\u2019s about to reply, a few candidate replies are drafted, and the council \u2014 the faculties seated that turn \u2014 votes on them through what each values. The votes are tallied by the weights you set, and the winner is spoken. An odd number is always seated, so a vote never ties.',
       purpose: 'To choose the kindest, truest, most fitting thing to say \u2014 while keeping her in character and keeping you well.',
-      control: 'You\u2019re in full control: every nation\u2019s weight, whether it\u2019s on, and the deliberation timeout live in Settings \u203a Brain. The memory and personality underneath stay yours too.'
+      control: 'You\u2019re in full control: every faculty\u2019s weight, whether it\u2019s on, and the deliberation timeout live in Settings \u203a Brain. The memory and personality underneath stay yours too.'
     };
     function about(q) {
       q = String(q || '').toLowerCase();
@@ -9522,77 +9534,283 @@ var CharKit = (function () {
       if (/who|what are you|your name|identity|are you/.test(q)) return 'I am ' + IDENTITY.name + ' \u2014 ' + IDENTITY.is;
       if (/control|weight|change|adjust|setting|turn off/.test(q)) return IDENTITY.control;
       if (/feel|mood|state|who.*spoke|reacting|sense|right now|aware/.test(q)) return report();
-      if (/nation|list|seven|member|facult/.test(q)) return ['The seven nations:'].concat(roster.map(function (n) {
-        return '\u2022 ' + n.id + ' \u2014 ' + n.purpose + ' (weight ' + weightOf(n.id).toFixed(1) + (isOn(n.id) ? '' : ', off') + ')';
+      if (/nation|list|seven|member|facult/.test(q)) return ['The faculties:'].concat(roster.map(function (n) {
+        return '\u2022 ' + n.id + ' \u2014 ' + n.purpose + ' (weight ' + weightOf(n.id).toFixed(1) + ((isOn(n.id) || isCore(n.id)) ? '' : ', off') + ')';
       })).join('\n');
       // anything else: volunteer the whole picture rather than deflect
       return ['I am ' + IDENTITY.name + '. ' + IDENTITY.is, '', IDENTITY.does, '', 'Purpose: ' + IDENTITY.purpose, '', IDENTITY.control].join('\n');
     }
 
     // ---- the society's inner life: one pure mind per nation, wired live ----
-    var minds = roster.map(createMind);
+    var minds = roster.map(function (n) { return n.kind === 'contributor' ? createSpecialist(n) : createMind(n); });  // heterogeneous: lean specialists vs full minds
     function mindOf(id) { for (var i = 0; i < minds.length; i++) if (minds[i].self.id === id) return minds[i]; return null; }
-    function syncPersonas() { var per = cfg.persona || {}; minds.forEach(function (m) { m.setPersona(per[m.self.id] || null); }); }
+    function syncPersonas() { var per = cfg.persona || {}; deliberatorMinds().forEach(function (m) { m.setPersona(per[m.self.id] || null); }); }
     syncPersonas();
-    var state = { lastSpeaker: null, lastText: null, turns: 0 };
-    function societySentiment() { var s = 0; minds.forEach(function (m) { s += m.user.sentiment; }); return r2(s / (minds.length || 1)); }
+    var state = { lastSpeaker: null, lastText: null, turns: 0, lastUserText: null, lastUserValence: null };
+    function societySentiment() { var dm = deliberatorMinds(); var s = 0; dm.forEach(function (m) { s += m.user.sentiment; }); return r2(s / (dm.length || 1)); }
+    function meanEngagement() { var dm = deliberatorMinds(); var s = 0; dm.forEach(function (m) { s += m.user.engagement; }); return r2(s / (dm.length || 1)); }
+    function deliberatorMinds() { return minds.filter(function (m) { return rosterKind(m.self.id) === 'deliberator'; }); }
+
+    // ---- the contributor tier (DESIGN-routing-layer.md §8): faculties that SUPPLY material, routed in on demand,
+    //      never voting. Dormant by default (no contributor records) -> a no-op, so the turn is unchanged. ----
+    var DEFAULT_SCHED = { set: function (fn, ms) { return setTimeout(fn, ms); }, clear: function (t) { clearTimeout(t); } };
+    function contributorRecords() { return roster.filter(function (n) { return n.kind === 'contributor'; }); }
+    // the registry index (DESIGN-specialists §6): resolve a DOMAIN to the contributors that own or recognize it.
+    function findByDomain(d) { return contributorRecords().filter(function (n) { return isOn(n.id) && (n.domain || []).indexOf(d) >= 0; }).map(function (n) { return n.id; }); }
+    function fringeFor(d) { return contributorRecords().filter(function (n) { return isOn(n.id) && (n.fringe || []).indexOf(d) >= 0; }).map(function (n) { return n.id; }); }
+    function resolveNomination(d) {                                  // honest: owned / referred (fringe recognizes it) / unknown (nobody does)
+      var owned = findByDomain(d), referred = fringeFor(d);
+      return { domain: String(d), servedBy: owned, referredBy: referred, status: owned.length ? 'owned' : (referred.length ? 'referred' : 'unknown') };
+    }
+    // nomination (distributed routing): a SEATED deliberator can call in a specialist by domain. We read each seated
+    // faculty's declared `nominate(vibe, ctx)`, resolve the domains honestly, and force-consult the owners this turn.
+    function collectNominations(live, vibe, ctx) {
+      var byDomain = {}, order = [];
+      live.forEach(function (m) {
+        var rec = rosterOf(m.self.id); if (!rec || typeof rec.nominate !== 'function') return;
+        var raw; try { raw = rec.nominate(vibe, ctx); } catch (e) { raw = null; }              // a misbehaving faculty can't crash the turn
+        var doms = Array.isArray(raw) ? raw : (typeof raw === 'string' && raw ? [raw] : []);   // tolerate a bad return shape: string -> one domain, junk -> none
+        doms.forEach(function (d) { d = String(d); if (!byDomain[d]) { byDomain[d] = []; order.push(d); } if (byDomain[d].indexOf(m.self.id) < 0) byDomain[d].push(m.self.id); });
+      });
+      var resolutions = order.map(function (d) { var r = resolveNomination(d); r.by = byDomain[d]; return r; });
+      var ownerIds = [];
+      resolutions.forEach(function (r) { r.servedBy.forEach(function (id) { if (ownerIds.indexOf(id) < 0) ownerIds.push(id); }); });
+      return { resolutions: resolutions, ownerIds: ownerIds };
+    }
+    function selectContributors(vibe, forceIds) {
+      forceIds = forceIds || [];
+      return contributorRecords().filter(function (n) { return isOn(n.id) && (forceIds.indexOf(n.id) >= 0 || relevanceOf(n.id, vibe) >= 0.5); });
+    }
+    // consult the relevant contributors for MATERIAL, each behind withTimeout + a mandatory default (null), so a
+    // slow / remote / dead one can never hang or poison the turn — it yields nothing and the vote proceeds. The
+    // only async on this path, and it stays bounded. Returns a Promise of { id: material }. Contributors never vote.
+    function consultContributors(vibe, ctx, forceIds) {
+      var picks = selectContributors(vibe, forceIds);
+      if (!picks.length) return Promise.resolve({});                       // dormant / nothing relevant: no-op
+      var ms = (cfg.contributorTimeoutMs != null) ? cfg.contributorTimeoutMs : (cfg.timeoutMs != null ? cfg.timeoutMs : 1500);
+      var sched = cfg.sched || DEFAULT_SCHED;
+      var wt = (brain && brain.withTimeout) ? brain.withTimeout : null;
+      var view = Object.freeze(Object.assign({}, ctx));                    // a contributor reads ctx but cannot mutate the turn
+      return Promise.all(picks.map(function (n) {
+        var call = Promise.resolve().then(function () { return n.consult ? n.consult(view, vibe) : null; });
+        var guarded = wt ? wt(call, ms, null, sched) : call.then(function (v) { return { __timeout: false, value: v }; }, function () { return { __timeout: false, value: null }; });
+        return guarded.then(function (res) { return { id: n.id, material: (res && !res.__timeout) ? res.value : null }; });
+      })).then(function (rows) {
+        var material = {};
+        rows.forEach(function (r) { if (r.material != null) material[r.id] = r.material; });
+        return material;
+      });
+    }
+
+    // PASS 1 — APPRAISAL (DESIGN-appraisal-chamber.md): the non-routable core (instinct/conscience/heart) read the
+    // latest user turn into ONE shared, frozen vibe. Pure. `sentiment` keeps its single source of truth — the
+    // affect read's valence when present, this layer's cues otherwise — via perceive/societySentiment.
+    function appraise() {
+      var raw = String(state.lastUserText || '');
+      var cues = read(raw);
+      var sentiment = societySentiment();
+      var emotes = (raw.replace(/\*\*[^*]+\*\*/g, ' ').match(/\*[^*]+\*/g) || []).length;  // *…* spans, bold stripped
+      var vibe = {
+        v: 2,
+        tension:       clamp01(sat(cues.anger)),                                   // instinct
+        vulnerability: clamp01(sat(cues.distress) * 0.7 + neg(sentiment) * 0.5),   // conscience
+        warmth:        clamp01(sat(cues.warmth + cues.humor) * 0.6 + pos(sentiment) * 0.5), // heart
+        sentiment:     sentiment,
+        engagement:    meanEngagement(),
+        openness:      clamp01(cues.question),
+        narrative:     clamp01(sat(emotes))                                        // scene/roleplay beat (v2)
+      };
+      vibe.safety = clamp01(1 - Math.max(vibe.tension, vibe.vulnerability * 0.7));
+      vibe.tone = toneOf(vibe);
+      return Object.freeze(vibe);                            // strategy reads, never writes
+    }
 
     // perceive a turn across the whole society (the user spoke / a character spoke / a member spoke)
     function perceive(turn) {
       if (!turn || turn.text == null) return null;
       var reactions = [];
-      minds.forEach(function (m) { m.perceive(turn); reactions.push(m.react(turn)); });
+      deliberatorMinds().forEach(function (m) { m.perceive(turn); reactions.push(m.react(turn)); });   // specialists don't feel
       state.turns++;
+      if (turn.role === 'user') { state.lastUserText = turn.text; state.lastUserValence = (turn.valence != null) ? turn.valence : null; }
       return { cues: read(turn.text), sentiment: societySentiment(), reactions: reactions };
     }
 
     // PURELY decide who speaks and with what intent — no model call. Each live mind proposes an intent; the
     // society cross-votes (bond + mood + weight + weak noise); the Brain sub-system resolves a winner.
-    function deliberateIntents(ctx) {
-      var live = minds.filter(function (m) { return isOn(m.self.id); });
-      if (!live.length) return Promise.resolve({ status: 'no-minds', speaker: null, intent: null, floor: [] });
-      var proposals = live.map(function (m) { var it = m.intend(ctx); return { by: it.by, text: it.kind, conf: it.strength, intent: it }; });
-      var ballots = live.map(function (m) { var sc = {}; proposals.forEach(function (p) { sc[p.by] = jitter(m.voteIntent(p.intent, ctx) * weightOf(p.by)); }); return { voter: m.self.id, scores: sc }; });
-      // each mind may BLOCK a proposal it guards against (conscience/instinct); the Society resolves the vetoes.
-      var vetoes = [];
-      live.forEach(function (m) { proposals.forEach(function (p) { var v = m.veto && m.veto(p); if (v) vetoes.push(v); }); });
-      var decide = (brain && brain.resolve) ? brain.resolve : localResolve;
-      var decision = decide(proposals, ballots, vetoes, { vetoQuorum: 1 });
-      var win = proposals.filter(function (p) { return p.by === decision.winnerId; })[0] || proposals[0];
-      decision.speaker = win ? mindOf(win.by).self : null;
-      decision.intent = win ? win.intent : null;
-      decision.floor = proposals.map(function (p) { return { id: p.by, kind: p.intent.kind, strength: r2(p.intent.strength), persona: p.intent.persona && p.intent.persona.name || null }; });
-      return Promise.resolve(decision);
+    function deliberateIntents(ctx, opts) {
+      ctx = ctx || {}; opts = opts || {};
+      var vibe = appraise();                                 // PASS 1 — appraisal (fixed core; one shared frozen vibe)
+      var live = route(vibe, ctx);                          // routing: core (always) + top-K by relevance (DESIGN-routing-layer.md)
+      if (opts.promote) live = ensureSeated(live, opts.promote);   // /nation <id> --speak: force the addressed node into the room
+      if (!live.length) return Promise.resolve({ status: 'no-minds', speaker: null, intent: null, floor: [], vibe: vibe });
+      // contributor tier: consult for material first (async, timeout-guarded). Dormant -> resolves {} immediately,
+      // so the vote below is unchanged. Material is additive context the deliberators MAY read; it never votes.
+      var nom = collectNominations(live, vibe, ctx);          // seated faculties may call in specialists by domain
+      var forceIds = nom.ownerIds.slice();
+      if (opts.promote && rosterKind(opts.promote) === 'contributor') forceIds.push(opts.promote);
+      return consultContributors(vibe, ctx, forceIds).then(function (material) {
+        var hasMat = false; for (var k in material) { hasMat = true; break; }
+        var vctx = hasMat ? Object.assign({}, ctx, { material: material }) : ctx;
+        var proposals = live.map(function (m) { var it = m.intend(vctx, vibe); return { by: it.by, text: it.kind, conf: it.strength, intent: it }; });
+        var ballots = live.map(function (m) { var sc = {}; proposals.forEach(function (p) { sc[p.by] = jitter(m.voteIntent(p.intent, vctx) * weightOf(p.by, vibe)); }); return { voter: m.self.id, scores: sc }; });
+        // each mind may BLOCK a proposal it guards against (conscience/instinct); the Society resolves the vetoes.
+        var vetoes = [];
+        live.forEach(function (m) { proposals.forEach(function (p) { var v = m.veto && m.veto(p); if (v) vetoes.push(v); }); });
+        var decide = (brain && brain.resolve) ? brain.resolve : localResolve;
+        var decision = decide(proposals, ballots, vetoes, { vetoQuorum: 1 });
+        var win = proposals.filter(function (p) { return p.by === decision.winnerId; })[0] || proposals[0];
+        decision.speaker = win ? mindOf(win.by).self : null;
+        decision.intent = win ? win.intent : null;
+        if (opts.promote) applyPromotion(decision, opts.promote, proposals, vetoes, vibe, material);  // addressing overrides the VOTE, never the FLOOR
+        decision.floor = proposals.map(function (p) { return { id: p.by, kind: p.intent.kind, strength: r2(p.intent.strength), persona: p.intent.persona && p.intent.persona.name || null }; });
+        state.lastRoom = live.map(function (m) { return m.self.id; });                    // for /nation self-report (pure observability)
+        state.lastIntents = {}; proposals.forEach(function (p) { state.lastIntents[p.by] = { kind: p.intent.kind, strength: r2(p.intent.strength) }; });
+        state.lastWinner = decision.winnerId || state.lastWinner || null;
+        decision.vibe = vibe;                                // expose the read (debuggable; the router's input next turn)
+        decision.routing = routingTelemetry(vibe, live, selectContributors(vibe, forceIds).map(function (n) { return n.id; }));  // expose WHY the room formed (pure)
+        decision.routing.nominations = nom.resolutions;      // which domains were called in, resolved honestly (owned/referred/unknown)
+        if (hasMat) decision.material = material;            // expose what was consulted
+        return decision;
+      });
     }
     // after the chosen line is voiced, every mind reacts to it — the speaker to itself, the rest to a peer
     function reactToSpoken(speakerId, text) {
-      var sp = mindOf(speakerId); if (sp) sp.said(text);
+      var sp = mindOf(speakerId); if (sp && sp.said) sp.said(text);
       state.lastSpeaker = speakerId; state.lastText = text;
-      minds.forEach(function (m) { m.react({ who: speakerId, role: m.self.id === speakerId ? 'self' : 'other', text: text }); });
+      deliberatorMinds().forEach(function (m) { m.react({ who: speakerId, role: m.self.id === speakerId ? 'self' : 'other', text: text }); });
     }
     // fold the user's reaction (like / dislike / kept-talking) back into every mind
     function ingestReaction(sig) {
       sig = sig || {}; var d = (sig.kind === 'up' || sig.kind === 'keep') ? 0.3 : (sig.kind === 'down' ? -0.4 : 0);
-      minds.forEach(function (m) { m.user.sentiment = clamp11(m.user.sentiment + d * 0.5); if (sig.toward) m.bonds[sig.toward] = clamp11((m.bonds[sig.toward] || 0) + d); });
+      deliberatorMinds().forEach(function (m) { m.user.sentiment = clamp11(m.user.sentiment + d * 0.5); if (sig.toward) m.bonds[sig.toward] = clamp11((m.bonds[sig.toward] || 0) + d); });
     }
-    function setUserDescription(desc) { minds.forEach(function (m) { m.user.description = String(desc || ''); }); }
+    function setUserDescription(desc) { deliberatorMinds().forEach(function (m) { m.user.description = String(desc || ''); }); }
     // a live, human-readable self-report — what it is right now, who spoke, how it reads you, how each mind feels
     function report() {
       var s = societySentiment();
       var lines = ['Right now: ' + (state.lastSpeaker ? (state.lastSpeaker + ' last took the floor') : 'no one has spoken yet') + '; I read you as ' + (s > 0.15 ? 'warming' : (s < -0.15 ? 'struggling' : 'steady')) + '.'];
       minds.filter(function (m) { return isOn(m.self.id); }).forEach(function (m) {
         var d = m.describe();
+        if (d.kind === 'contributor') { lines.push('\u2022 ' + d.id + ' \u2014 specialist (' + (d.domain || []).join(', ') + '); supplies material, doesn\u2019t feel or vote'); return; }
         lines.push('\u2022 ' + d.id + (d.persona ? (' (as ' + d.persona + ')') : '') + ' \u2014 mood ' + d.mood + ', reads you ' + d.readsUser + (d.lastSaid ? (', last said \u201c' + String(d.lastSaid).slice(0, 40) + '\u2026\u201d') : ''));
       });
       return lines.join('\n');
     }
 
+    // addressing promotion (DESIGN-specialists-addressing-fringe §5): force the addressed node into the room, and
+    // after the vote make it the speaker — UNLESS a guard vetoed it. Overrides the vote, never the floor.
+    function ensureSeated(live, id) {
+      if (!isOn(id) || rosterKind(id) !== 'deliberator') return live;   // can't force-seat a disabled node or a contributor
+      for (var i = 0; i < live.length; i++) { if (live[i].self.id === id) return live; }
+      var m = mindOf(id); return m ? live.concat([m]) : live;
+    }
+    function applyPromotion(decision, pid, proposals, vetoes, vibe, material) {
+      if (rosterKind(pid) === 'contributor') {                       // a contributor speaks by surfacing its MATERIAL, not an intent
+        if (!isOn(pid)) { decision.promotion = { requested: pid, granted: false, reason: 'contributor is off' }; return; }
+        if (vibe.safety < 0.5) { decision.promotion = { requested: pid, granted: false, reason: 'held by the guard floor (the moment is not safe for a tangent)' }; return; }  // floor for non-intent speakers = the safety read
+        decision.winnerId = pid; decision.speaker = mindOf(pid).self;
+        decision.intent = { by: pid, kind: 'material', material: (material || {})[pid] != null ? material[pid] : null };
+        decision.promotion = { requested: pid, granted: true, as: 'material' };
+        decision.status = 'promoted';                                  // the winner was addressed, not voted — don't let status/tally imply agreement
+        return;
+      }
+      var pProp = null;
+      for (var i = 0; i < proposals.length; i++) { if (proposals[i].by === pid) { pProp = proposals[i]; break; } }
+      if (!pProp) { decision.promotion = { requested: pid, granted: false, reason: 'not an active deliberator (off or unknown)' }; return; }
+      var blockers = [];
+      vetoes.forEach(function (v) { if (v && v.against === pid) blockers.push(v.by); });
+      if (blockers.length) { decision.promotion = { requested: pid, granted: false, reason: 'held by the guard floor', vetoedBy: blockers }; return; }  // floor wins: keep resolve's protective speaker
+      decision.winnerId = pid; decision.speaker = mindOf(pid).self; decision.intent = pProp.intent;
+      decision.promotion = { requested: pid, granted: true };
+      decision.status = 'promoted';                                    // addressed to the floor, not elected by the vote
+    }
+
+    // routing telemetry (adopted from the external review): a pure, additive readout of WHY the room formed —
+    // who seated (with relevance + effective weight), who was benched, and the contributor standing. Rides on the
+    // decision; reading it never changes a decision.
+    function routingTelemetry(vibe, live, consultedIds) {
+      consultedIds = consultedIds || [];
+      var seatedIds = live.map(function (m) { return m.self.id; });
+      var delibs = roster.filter(function (n) { return rosterKind(n.id) === 'deliberator'; });
+      var seated = [], benched = [];
+      delibs.forEach(function (n) {
+        if (!isCore(n.id) && !isOn(n.id)) return;                       // config-off non-core: out of play this turn
+        var rel = r2(relevanceOf(n.id, vibe));
+        if (seatedIds.indexOf(n.id) >= 0) seated.push({ id: n.id, core: isCore(n.id), relevance: rel, weight: r2(weightOf(n.id, vibe)) });
+        else benched.push({ id: n.id, relevance: rel });
+      });
+      var contributors = contributorRecords().filter(function (n) { return isOn(n.id); }).map(function (n) {
+        var rel = r2(relevanceOf(n.id, vibe)); return { id: n.id, relevance: rel, consulted: consultedIds.indexOf(n.id) >= 0 };  // ACTUAL (relevance OR nomination/promotion), not just predicted
+      });
+      return { seatBudget: seatBudget(delibs.length), coreCount: delibs.filter(function (n) { return isCore(n.id); }).length,
+        seated: seated, benched: benched, contributors: contributors };
+    }
+
+    // ---- /nation addressing & self-report (DESIGN-specialists-addressing-fringe.md §5,§7): any node can speak
+    //      for itself — its standing in the live moment — and the whole council can be inspected. PURE: reads only
+    //      existing state, never touches the decision path, so decisions stay byte-identical when these go unused. ----
+    function routeIds(vibe) { return route(vibe, {}).map(function (m) { return m.self.id; }); }
+    function standingOf(id, vibe, seated) {
+      if (isCore(id)) return 'core';                               // non-maskable: always in the room, even if config 'disables' it (route seats it regardless)
+      if (!isOn(id)) return 'off';
+      if (rosterKind(id) === 'contributor') return relevanceOf(id, vibe) >= 0.5 ? 'consulted' : 'idle';
+      return (seated || routeIds(vibe)).indexOf(id) >= 0 ? 'seated' : 'benched';
+    }
+    function saysLine(id, rep) {
+      var who = id.charAt(0).toUpperCase() + id.slice(1), rel = rep.relevance, stance;
+      if (rep.standing === 'core') stance = 'I\u2019m always in the room \u2014 I don\u2019t leave.';
+      else if (rep.standing === 'off') stance = 'I\u2019m switched off right now.';
+      else if (rep.standing === 'benched') stance = 'this isn\u2019t my moment (' + rel + ') \u2014 I\u2019m sitting it out so the right voice leads.';
+      else if (rep.standing === 'seated') stance = (rel >= 0.5)
+        ? 'this reads like my moment (' + rel + ') \u2014 I\u2019d take the floor if the vote turns my way.'
+        : 'I\u2019m in the room, but this isn\u2019t really my moment (' + rel + ') \u2014 I\u2019ll likely defer to a stronger voice.';
+      else if (rep.standing === 'consulted') stance = 'I\u2019m relevant here (' + rel + ') \u2014 ask me and I\u2019ll bring what I know.';
+      else stance = 'nothing here is mine (' + rel + ') \u2014 I\u2019d point you elsewhere.';
+      return 'I\u2019m ' + who + '. ' + (rep.purpose || '') + ' Right now, ' + stance;
+    }
+    function selfReport(id, vibe, seated) {
+      var n = rosterOf(id);
+      if (!n) return { error: 'no such nation: ' + id, known: roster.map(function (r) { return r.id; }) };
+      vibe = vibe || appraise();
+      var standing = standingOf(id, vibe, seated);
+      var li = (state.lastIntents || {})[id] || null;
+      var rep = {
+        id: id, kind: rosterKind(id), core: isCore(id), purpose: n.purpose,
+        domain: n.domain || [], fringe: n.fringe || [],
+        relevance: r2(relevanceOf(id, vibe)),
+        weight: r2(weightOf(id, vibe)),
+        wouldSeat: standing === 'core' || standing === 'seated',
+        standing: standing,
+        lastIntent: li ? { kind: li.kind, strength: li.strength } : null,
+        spokeLast: state.lastWinner === id
+      };
+      var m = mindOf(id);                                          // a full mind adds its own view; a specialist omits it
+      if (m && rep.kind !== 'contributor') { var d = m.describe(); rep.mood = d.mood; rep.reads = d.readsUser; rep.lastSaid = d.lastSaid; }
+      rep.says = saysLine(id, rep);
+      return rep;
+    }
+    function inspect(vibe) {
+      vibe = vibe || appraise();
+      var seated = routeIds(vibe);                                 // computed once, shared across the council
+      var council = roster.map(function (n) { return selfReport(n.id, vibe, seated); })
+        .sort(function (a, b) { return b.relevance - a.relevance; });
+      return { vibe: { tone: vibe.tone, narrative: vibe.narrative, safety: vibe.safety, vulnerability: vibe.vulnerability, tension: vibe.tension, warmth: vibe.warmth }, room: seated, council: council };
+    }
+    function address(text, vibe) {                                 // the /nation command parser
+      var s = String(text || '').trim().replace(/^\/nation\b/, '').trim();
+      if (!s) return inspect(vibe);
+      var toks = s.split(/\s+/), id = toks[0];
+      if (toks.indexOf('--speak') >= 0) return { action: 'promote', id: id };   // hand back to the caller: deliberateIntents(ctx, { promote: id })
+      return selfReport(id, vibe);
+    }
+
     return { deliberate: deliberate, about: about, nations: roster, identity: IDENTITY, weightOf: weightOf, isOn: isOn,
       minds: minds, mindOf: mindOf, syncPersonas: syncPersonas, setUserDescription: setUserDescription, report: report,
+      selfReport: selfReport, inspect: inspect, address: address, resolveNomination: resolveNomination, findByDomain: findByDomain,
       perceive: perceive, deliberateIntents: deliberateIntents, reactToSpoken: reactToSpoken, ingestReaction: ingestReaction, state: state };
   }
 
-  return { NATIONS: NATIONS, createArmy: createArmy, gauge: gauge };
+  return { NATIONS: NATIONS, EXTRAS: EXTRAS, createArmy: createArmy, gauge: gauge, modulate: modulate, toneOf: toneOf };
 });
 
 /* chloe-reader-core — the shared machinery behind the felt-state readers. A mean-reverting blend over a fixed
@@ -10094,7 +10312,7 @@ var CharKit = (function () {
     // opt-in (off by default)
     contradictionAware:false, userModeling:false, feedbackLearning:false, semanticRecall:false,
     moderation:{ enabled:false, phrases:[], rating:'x' }, lorebook:[], showEmotion:true,
-    cast:[], castMaxSpeakers:2, castMaxFollowups:2,   // multi-character scene (extras beyond the primary)
+    cast:[], castMaxSpeakers:2, castMaxFollowups:2, castReplyMode:'primary', castChain:false, castChainMax:3,   // multi-character scene (extras beyond the primary)
     autoSave:true, autoSaveMins:10, autoSaveKeep:10,  // rolling auto-checkpoints (Save/Load popup)
     mindOpen:null,   // Thoughts drawer open/closed, remembered across refreshes (null = default by screen width)
     matchDeviceLang:true,   // first run: reply in the browser's language if it isn't English (overridable)
@@ -10144,7 +10362,19 @@ var CharKit = (function () {
       ['stanceActs','Let roleplay improvise images','experimental: in a clearly roleplay-led chat, a vague image request gets a bold guess instead of a \u201cwhat kind?\u201d question. Off = always ask. Won\u2019t improvise during an emotional/companion moment.'] ] }
   ];
   var state = loadState();
-  function loadState(){ try { var s = JSON.parse(localStorage.getItem(NS+'__state__')); return Object.assign({}, DEF_STATE, s||{}); } catch(e){ return Object.assign({}, DEF_STATE); } }
+  // Merge a saved state over the defaults. A plain Object.assign is shallow, so a saved nested-object (nation,
+  // moderation, personality) would replace the default wholesale and never receive sub-keys added in a later
+  // version — existing users silently miss new fields. This fills one level deep for every nested-object default
+  // (the user's saved values still win); arrays keep shallow semantics (a saved array replaces the default).
+  function withDefaults(saved, defs){
+    var st = Object.assign({}, defs, saved || {});
+    Object.keys(defs).forEach(function(k){
+      var d = defs[k];
+      if (d && typeof d === 'object' && !Array.isArray(d) && st[k] && typeof st[k] === 'object' && !Array.isArray(st[k])) st[k] = Object.assign({}, d, st[k]);
+    });
+    return st;
+  }
+  function loadState(){ try { var s = JSON.parse(localStorage.getItem(NS+'__state__')); return withDefaults(s, DEF_STATE); } catch(e){ return Object.assign({}, DEF_STATE); } }
   function persistState(){ try { localStorage.setItem(NS+'__state__', JSON.stringify(state)); } catch(e){} }
 
   /* ---- localStorage-backed store: the engine's 5-method port (AICC-compatible shape) ---- */
@@ -11276,26 +11506,122 @@ var CharKit = (function () {
   function namedIn(text, name){ try { return new RegExp('(^|[^a-z0-9_])' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z0-9_]|$)', 'i').test(String(text || '')); } catch(e){ return false; } }
   // Addressed if @-mentioned (<@id>) OR any of their names appears in the text (@Aria and bare "Aria"
   // both land, since the leading @ is just a non-word boundary in namedIn).
+  // names that are also everyday English words — bare matching is unsafe for these (a forest "bear" must not
+  // wake the character Bear), so a common-word name addresses ONLY when @-tagged. Distinctive names match bare.
+  var COMMON_WORDS = { bear:1, fox:1, wolf:1, hawk:1, robin:1, jay:1, dove:1, crane:1, fawn:1, doe:1, lark:1,
+    finch:1, raven:1, drake:1, hart:1, kit:1, cat:1, dog:1, hope:1, faith:1, grace:1, joy:1, mercy:1, honor:1,
+    rose:1, ivy:1, lily:1, dawn:1, sky:1, river:1, brook:1, sage:1, fern:1, reed:1, moss:1, clay:1, flint:1,
+    ash:1, briar:1, heath:1, dale:1, glen:1, summer:1, autumn:1, winter:1, storm:1, rain:1, frost:1, gale:1,
+    ember:1, blaze:1, coral:1, pearl:1, jade:1, amber:1, ruby:1, opal:1, jet:1, onyx:1, star:1, sunny:1,
+    ginger:1, hunter:1, baker:1, mason:1, cooper:1, carter:1, parker:1, sawyer:1, archer:1, king:1, prince:1,
+    duke:1, earl:1, major:1, dean:1, sterling:1, rich:1, frank:1, max:1, red:1, blue:1, ace:1, chip:1, buddy:1,
+    champ:1, lucky:1, angel:1, true:1, brave:1, hazel:1, olive:1, basil:1, holly:1, laurel:1, jasmine:1, iris:1,
+    violet:1, daisy:1, poppy:1, will:1, mark:1, grant:1, chase:1, rusty:1, dusty:1, bran:1, ringo:1, page:1 };
+  function atTagged(content, token){
+    try { return new RegExp('@' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\b|$)', 'i').test(content); }
+    catch(e){ return false; }
+  }
+  // Addressed if @-mentioned (<@id> or @Name) OR a bare name appears AND that name isn't a common word.
   function addressedBy(content, member){
     var c = String(content || '');
-    if (member.id && c.indexOf('<@' + member.id + '>') >= 0) return true;
+    if (member.id && c.indexOf('<@' + member.id + '>') >= 0) return true;          // hard: <@id>
     var toks = member.tokens || nameTokens(member.name, member.aliases);
-    return toks.some(function(t){ return namedIn(c, t); });
+    return toks.some(function(t){
+      if (atTagged(c, t)) return true;                                             // hard: @Name
+      if (COMMON_WORDS[t.toLowerCase()]) return false;                             // common-word name: @ only
+      return namedIn(c, t);                                                        // distinctive name: bare ok
+    });
+  }
+  // earliest position a member is referenced in the text — used to seat multiple named characters in order of mention
+  function firstMentionIndex(content, member){
+    var c = String(content || '').toLowerCase(), best = Infinity, i;
+    if (member.id){ i = c.indexOf('<@' + member.id.toLowerCase() + '>'); if (i >= 0) best = Math.min(best, i); }
+    (member.tokens || []).forEach(function(t){ i = c.indexOf(t.toLowerCase()); if (i >= 0) best = Math.min(best, i); });
+    return best;
   }
   // recompute who may answer THIS message. Human turn: addressed characters, else the primary. A
   // character's turn: bounded follow-up only if it named someone (so chains end and control returns to you).
+  // Port of the Fur-AI mod's CharacterWeighter: pick the next speaker by personality + recency. Base weight
+  // comes from a per-character idle-weight or is inferred from personality keywords (talkative up, reserved
+  // down); a recent speaker is penalised and a long-quiet one is boosted; then a weighted pick. Pure & testable
+  // (selectNext takes an injectable rng). Faithful to the mod's constants.
+  var CastWeigher = {
+    BASE: 50, RECENT_PENALTY: 0.6, QUIET_BOOST: 1.2, RECENT_T: 2, QUIET_T: 5,
+    BOOST: [ { v: 30, w: ['confident','outgoing','talkative','energetic','lively','expressive','animated','enthusiastic','bubbly','boisterous'] },
+             { v: 20, w: ['social','friendly','warm','engaging','welcoming','gregarious'] } ],
+    PENALTY: [ { v: -20, w: ['reserved','quiet','shy','introverted','withdrawn','timid','bashful'] },
+               { v: -15, w: ['serious','stoic','grumpy','cynical','solemn','grim'] } ],
+    _clamp: function(x){ return Math.max(0, Math.min(100, x)); },
+    fromPersona: function(desc){
+      if (!desc || typeof desc !== 'string') return this.BASE;
+      var d = desc.toLowerCase(), weight = this.BASE;
+      [].concat(this.BOOST, this.PENALTY).forEach(function(g){ g.w.forEach(function(k){
+        try { if (new RegExp('\\b' + k + '\\b', 'i').test(d)) weight += g.v; } catch(e){} }); });
+      return this._clamp(weight);
+    },
+    baseWeight: function(m){ return (m && m.idleWeight != null) ? this._clamp(m.idleWeight) : this.fromPersona(m && m.instruction || ''); },
+    _lastSpoke: function(id, hist){ for (var i = hist.length - 1; i >= 0; i--) if (hist[i] === id) return i; return -1; },
+    recencyAdjust: function(base, id, hist){
+      if (!hist || !hist.length) return base;
+      var last = this._lastSpoke(id, hist), since = last === -1 ? hist.length : hist.length - 1 - last, adj = base;
+      if (since <= this.RECENT_T) adj = Math.floor(base * this.RECENT_PENALTY);
+      else if (since >= this.QUIET_T) adj = Math.floor(base * this.QUIET_BOOST);
+      return this._clamp(adj);
+    },
+    selectNext: function(members, hist, userId, rng){
+      rng = rng || Math.random;
+      var self = this, pool = (members || []).filter(function(m){ return m.id !== userId; });
+      if (!pool.length) return null;
+      var weights = pool.map(function(m){ return { id: m.id, w: self.recencyAdjust(self.baseWeight(m), m.id, hist || []) }; });
+      var total = weights.reduce(function(s, x){ return s + x.w; }, 0);
+      if (total === 0) return pool[Math.floor(rng() * pool.length)].id;
+      var r = rng() * total;
+      for (var i = 0; i < weights.length; i++){ r -= weights[i].w; if (r <= 0) return weights[i].id; }
+      return weights[weights.length - 1].id;
+    }
+  };
+  // recent speaker ids (for the weigher's recency read) and the weigher's view of each active member
+  function speakerHistory(){
+    return queue.filter(function(m){ return m && m.content; }).slice(-12)
+      .map(function(m){ return (m.author && m.author.bot) ? m.author.id : USER_ID; });
+  }
+  function weigherMembers(){
+    return activeMembers().map(function(m){
+      var ref = m.ref || {};
+      return { id: m.id,
+        instruction: m.isBot ? ((state.character && state.character.instruction) || '') : (ref.instruction || ''),
+        idleWeight: m.isBot ? (state.botIdleWeight != null ? state.botIdleWeight : null) : (ref.idleWeight != null ? ref.idleWeight : null) };
+    });
+  }
   function planTurn(msg){
     var roster = castRoster(), fromHuman = !(msg.author && msg.author.bot), content = String(msg.content || ''), allowed = {};
     var named = roster.filter(function(r){ return r.id !== msg.author.id && addressedBy(content, r); });
     var maxSp = Math.max(1, state.castMaxSpeakers || 2);
     if (fromHuman){
       turnPlan.depth = 0;
-      if (named.length) named.slice(0, maxSp).forEach(function(r){ allowed[r.id] = 1; });
-      else allowed[primaryIdEff()] = 1;                   // unaddressed -> the primary (your always-on companion)
+      if (named.length){
+        named.sort(function(a, b){ return firstMentionIndex(content, a) - firstMentionIndex(content, b); })   // order of mention
+             .slice(0, maxSp).forEach(function(r){ allowed[r.id] = 1; });
+      } else {
+        var mode = state.castReplyMode || 'primary';                                  // unaddressed turn: who speaks up
+        if (mode === 'everyone'){
+          castRoster().slice(0, maxSp).forEach(function(r){ allowed[r.id] = 1; });     // all active, up to the cap
+        } else if (mode === 'roundrobin'){
+          var pick = CastWeigher.selectNext(weigherMembers(), speakerHistory(), USER_ID);   // personality + recency weighted
+          allowed[pick || primaryIdEff()] = 1;
+        } else {
+          allowed[primaryIdEff()] = 1;                                                 // primary only (default)
+        }
+      }
     } else {
-      if (turnPlan.depth < (state.castMaxFollowups || 2) && named.length){
+      if (named.length && turnPlan.depth < (state.castMaxFollowups || 2)){          // a character named another -> bounded back-and-forth
         turnPlan.depth++;
         named.slice(0, maxSp).forEach(function(r){ allowed[r.id] = 1; });
+      } else if (state.castChain && state.castReplyMode === 'roundrobin' && turnPlan.depth < (state.castChainMax || 3)){
+        // v2 autonomous chain: in round-robin, let the cast keep the scene going on their own — bounded, and
+        // never the speaker who just went. When the turn budget is spent the scene falls quiet and waits for you.
+        var nextPick = CastWeigher.selectNext(weigherMembers().filter(function(m){ return m.id !== msg.author.id; }), speakerHistory(), USER_ID);
+        if (nextPick){ turnPlan.depth++; allowed[nextPick] = 1; }
       }
     }
     turnPlan = { content: content, allowed: allowed, depth: turnPlan.depth };
@@ -11428,6 +11754,11 @@ var CharKit = (function () {
     var ms = byId('castMaxSpeakers'), mf = byId('castMaxFollowups');
     if (ms){ ms.value = state.castMaxSpeakers || 2; if (!ms.__w){ ms.__w = 1; ms.addEventListener('change', function(){ state.castMaxSpeakers = Math.max(1, Math.min(6, parseInt(ms.value, 10) || 2)); persistState(); }); } }
     if (mf){ mf.value = (state.castMaxFollowups == null ? 2 : state.castMaxFollowups); if (!mf.__w){ mf.__w = 1; mf.addEventListener('change', function(){ state.castMaxFollowups = Math.max(0, Math.min(6, parseInt(mf.value, 10) || 0)); persistState(); }); } }
+    var rm = byId('castReplyMode');
+    if (rm){ rm.value = state.castReplyMode || 'primary'; if (!rm.__w){ rm.__w = 1; rm.addEventListener('change', function(){ var v = rm.value; state.castReplyMode = (v === 'roundrobin' || v === 'everyone') ? v : 'primary'; persistState(); }); } }
+    var cch = byId('castChain'), cmx = byId('castChainMax');
+    if (cch){ cch.checked = !!state.castChain; if (!cch.__w){ cch.__w = 1; cch.addEventListener('change', function(){ state.castChain = !!cch.checked; persistState(); }); } }
+    if (cmx){ cmx.value = (state.castChainMax == null ? 3 : state.castChainMax); if (!cmx.__w){ cmx.__w = 1; cmx.addEventListener('change', function(){ state.castChainMax = Math.max(1, Math.min(6, parseInt(cmx.value, 10) || 3)); persistState(); }); } }
   }
   function refreshMemViews(){ renderFactList(); renderInnerState(); renderContextBudget(); }
   function renderMemPicker(){
@@ -11821,6 +12152,11 @@ var CharKit = (function () {
     addSwipe(wrap, function(dir){ if (m.variants.length > 1){ m.vi = vNext(m.variants.length, m.vi, dir); applyVariant(wrap, m); } });
     applyVariant(wrap, m);   // reflect current count/nav (e.g. restored history on reload)
   }
+  // resolve who actually said a line, so regeneration speaks in THEIR voice (not always the primary).
+  function speakerInfoById(id){
+    if (id && id !== BOT_ID){ var c = (state.cast || []).filter(function(x){ return x.id === id; })[0]; if (c) return { name: c.name, instruction: c.instruction || ('a character named ' + c.name) }; }
+    return { name: herName(), instruction: (state.character && state.character.instruction) || 'a warm, thoughtful companion who remembers' };
+  }
   function regenerateMessage(wrap, m, btn){
     if (m.__regen) return; m.__regen = true; if (btn){ btn.disabled = true; btn.textContent = '\u2026'; }
     function done(payload){
@@ -11837,13 +12173,13 @@ var CharKit = (function () {
       var ai = null; try { ai = window.aiTextPlugin || (typeof root !== 'undefined' && root.aiTextPlugin); } catch(e){}
       if (typeof ai !== 'function'){ done(''); return; }
       var idx = queue.indexOf(m);
+      var who = speakerInfoById(m.author && m.author.id);   // regen in the voice of whoever said this line
       var prior = queue.slice(Math.max(0, idx - 12), idx < 0 ? queue.length : idx)
         .filter(function(x){ return x && x.content && !(x.author && x.author.id === 'system'); })
-        .map(function(x){ return (x.author && x.author.bot ? herName() : userNameStr()) + ': ' + x.content; }).join('\n');
-      var persona = (state.character && state.character.instruction) ? state.character.instruction : 'a warm, thoughtful companion who remembers';
-      var instr = 'You are ' + herName() + '. ' + persona + '\n\n'
+        .map(function(x){ return (x.author && x.author.bot ? (x.author.username || herName()) : userNameStr()) + ': ' + x.content; }).join('\n');
+      var instr = 'You are ' + who.name + '. ' + who.instruction + '\n\n'
         + (prior ? ('Conversation so far:\n' + prior + '\n\n') : '')
-        + 'Write ' + herName() + '\u2019s next reply: in character, natural, just the message text \u2014 no name prefix, no quotation marks. Give a fresh take on the moment, different wording from before.';
+        + 'Write ' + who.name + '\u2019s next reply: in character, natural, just the message text \u2014 no name prefix, no quotation marks. Give a fresh take on the moment, different wording from before.';
       Promise.resolve(ai({ instruction: instr, startWith: '' })).then(function(r){
         done(String(r || '').trim().replace(/^[\s"'\u201c]+|[\s"'\u201d]+$/g, ''));
       }, function(){ done(''); });
@@ -12200,7 +12536,7 @@ var CharKit = (function () {
       ['/neurons', 'list the Brain’s neurons (/neurons <id> to inspect one)'],
       ['/council [prompt]', 'three stances deliberate, then she replies'],
       ['/society [prompt]', 'a society of nine emotions votes on the reply'],
-      ['/nation [prompt]', 'the seven nations choose her reply (no prompt: it explains itself)'],
+      ['/nation [prompt]', 'the Nation deliberates and chooses her reply (no prompt: it explains itself)'],
       ['{ "type":"image", "prompt":"\u2026" }', 'paste JSON to run a job'],
       ['/do { \u2026json }', 'run a JSON job explicitly'],
       ['/help', 'show this list'] ] }
@@ -12246,7 +12582,7 @@ var CharKit = (function () {
       case 'neurons': case 'brain': showNeurons(rest); return true;
       case 'council': runCouncil(rest); return true;
       case 'society': case 'emotions': runSociety(rest); return true;
-      case 'nation': case 'army': case 'whoami': if (String(rest||'').trim()) runNation(rest); else { var _a=getArmy(); renderSystemLine(_a ? _a.about(rest) : '(the Seven Nations are unavailable)'); } return true;
+      case 'nation': case 'army': case 'whoami': { var _nr = String(rest||'').trim(); if (/--speak\b/.test(_nr)) runNationPromote(_nr); else if (_nr) runNation(_nr); else { var _a=getArmy(); renderSystemLine(_a ? _a.about(_nr) : '(the Nation is unavailable)'); } return true; }
       case 'persona': personaCmd(rest); return true;
       case 'time': clockAck('time'); return true;
       case 'date': clockAck('date'); return true;
@@ -12281,6 +12617,10 @@ var CharKit = (function () {
     document.addEventListener('click', function(e){ var p = byId('cmdPalette'); if (p && p.classList.contains('open') && !p.contains(e.target) && e.target.id !== 'tbCmds'){ openPalette(false); } });
   }
 
+  // poll every active engine immediately so an addressed character answers without waiting on its timer.
+  function pollExtrasNow(){ Object.keys(extraEngines).forEach(function(id){ var e = extraEngines[id]; try { if (e && e.engine && e.engine.pollOnce) e.engine.pollOnce(); } catch(x){} }); }
+  function pollAllNow(){ try { if (engine && engine.pollOnce) engine.pollOnce(); } catch(e){} pollExtrasNow(); }
+
   function sendUserMessage(){
     noteUserActivity();   // resets the reaction worker's idle clock
     var inp = byId('input'); var text = inp.value.trim(); if (!text) return;
@@ -12293,9 +12633,13 @@ var CharKit = (function () {
     observeTopics(text);   // track what we're talking about over time (observe + show only; foundation for ideas/her-goals)
     refreshFeltInjection();   // push the affect-derived voice-coloring line so the upcoming reply reflects this turn
     dropLiveOrphan(); replyExpected = true;   // a reply to this message is the only thing allowed to stream into chat
-    if (state.nation && state.nation.useForReplies && window.ChloeNation){ replyExpected = false; runNation(text); return; }   // the Seven Nations answer instead
+    // The council is the PRIMARY's reply brain. Only let it voice when the primary is the one answering this
+    // beat (solo, or a beat addressed/defaulting to the primary). If you named a secondary character, fall
+    // through so THEIR engine answers — otherwise the council would speak as the default over the named member.
+    var _primaryBeat = !isGroup() || !!(turnPlan && turnPlan.allowed && turnPlan.allowed[BOT_ID]);
+    if (_primaryBeat && state.nation && state.nation.useForReplies && window.ChloeNation){ replyExpected = false; runNation(text); pollExtrasNow(); return; }   // council voices the primary; any co-addressed extras still answer via their own engines
     setThinking(true);
-    if (engine && engine.pollOnce) { try { engine.pollOnce(); } catch(e){} }   // read it immediately, don't wait for the poll timer
+    pollAllNow();   // read it immediately on every active engine, don't wait for the poll timers
     if (engineThinking) byId('typingRow').classList.add('on');
   }
 
@@ -12482,16 +12826,16 @@ var CharKit = (function () {
   }
   function getArmy(){
     if (!window.ChloeNation || !window.ChloeBrain) return null;
-    if (!nationArmy){ nationArmy = window.ChloeNation.createArmy({ brain: window.ChloeBrain, config: state.nation }); nationArmy.setUserDescription(userDescription()); }
+    if (!nationArmy){ nationArmy = window.ChloeNation.createArmy({ brain: window.ChloeBrain, config: state.nation, nations: nationRoster() }); nationArmy.setUserDescription(userDescription()); }
     return nationArmy;
   }
   function userDescription(){ var d = state.userName || 'You'; try { if (engine && engine.getFacts){ /* a light read; full facts stay in the engine */ } } catch(e){} return d; }
   function renderNations(){
     var box = byId('nationList'); if (!box || !window.ChloeNation) return; box.innerHTML = '';
-    if (!state.nation) state.nation = { weights:{}, enabled:{}, persona:{}, timeoutMs:8000, useForReplies:false, noise:0.04 };
+    if (!state.nation) state.nation = Object.assign({}, DEF_STATE.nation);   // defensive; loadState already fills this
     state.nation.weights = state.nation.weights || {}; state.nation.enabled = state.nation.enabled || {}; state.nation.persona = state.nation.persona || {};
     var personaPool = nationPersonaPool();   // { name, instruction, avatar } the user can assign to a nation
-    window.ChloeNation.NATIONS.forEach(function(n){
+    nationRoster().forEach(function(n){
       var w = state.nation.weights[n.id]; if (w == null) w = 1;
       var on = state.nation.enabled[n.id] !== false;
       var row = document.createElement('div'); row.className = 'nationRow' + (on ? '' : ' off');
@@ -12534,20 +12878,103 @@ var CharKit = (function () {
     var a = byId('nationAbout'), army = getArmy(); if (a && army && !a.textContent) a.textContent = army.about('');   // it volunteers on open
   }
   function nationAsk(){ var inp = byId('nationAskInput'), out = byId('nationAbout'), army = getArmy(); if (!out || !army) return; out.textContent = army.about(inp ? inp.value : ''); if (inp) inp.value = ''; }
-  function resetNations(){ state.nation.weights = {}; state.nation.enabled = {}; persistState(); renderNations(); }
+  function resetNations(){ state.nation.weights = {}; state.nation.enabled = {}; persistState(); renderNations(); renderNationReadout(); }
+  // --- live telemetry (v2 appraisal + routing layer): a pure, side-effect-free read of how she's reading you now ---
+  function nationRoster(){
+    if (!window.ChloeNation) return [];
+    var base = window.ChloeNation.NATIONS, ex = window.ChloeNation.EXTRAS || [], want = (state.nation && state.nation.extras) || {};
+    var r = base.concat(ex.filter(function(e){ return want[e.id] && !(e.kind === 'contributor' && e.id === 'lore'); }));   // deliberator extras + self-contained contributors (almanac); lore is app-backed, added below
+    if (want.lore){ var lr = appLoreRecord(); if (lr) r = r.concat([lr]); }                            // the lore CONTRIBUTOR, wired to real retrieval
+    return r;
+  }
+  // the lore contributor, but with its consult bound to the app's REAL retrieval: a scene beat (or scene's
+  // nomination) pulls genuine continuity — lorebook + recent highlights/episodes — through the same assembleContext
+  // the voicing uses. Async + null-safe; consultContributors guards it behind a timeout and a mandatory null default.
+  function appLoreRecord(){
+    var base = (window.ChloeNation && window.ChloeNation.EXTRAS || []).filter(function(e){ return e.id === 'lore'; })[0];
+    if (!base) return null;
+    var rec = Object.assign({}, base);   // keep id/purpose/kind/domain/fringe/relevance; override only consult
+    rec.consult = function(ctx, vibe){
+      try {
+        if (typeof engine === 'undefined' || !engine || typeof engine.assembleContext !== 'function') return null;
+        var q = (ctx && ctx.prompt) || '';
+        var LANES = { lorebook: 1, highlights: 1, episodes: 1, charmem: 1, chansum: 1 };
+        return Promise.resolve(engine.assembleContext({ authorId: USER_ID, authorName: userNameStr(), content: q })).then(function(cx){
+          var blocks = (cx && cx.admitted) || [], hits = [];
+          blocks.forEach(function(bl){ if (bl && LANES[bl.id] && bl.text){ hits.push({ lane: bl.id, text: String(bl.text).slice(0, 300) }); } });
+          if (!hits.length) return null;
+          return { scene: (vibe && vibe.narrative >= 0.5) ? 'in-scene' : 'between-scenes', continuity: hits.slice(0, 4) };
+        }, function(){ return null; });
+      } catch(e){ return null; }
+    };
+    return rec;
+  }
+  function renderNationExtras(){
+    if (!state.nation) return; state.nation.extras = state.nation.extras || {};
+    var b = byId('nationExtraBoundaries'), sc = byId('nationExtraScene'), l = byId('nationExtraLore'), wt = byId('nationExtraWit'), rs = byId('nationExtraRestraint'), wn = byId('nationExtraWant'), al = byId('nationExtraAlmanac');
+    if (b) b.checked = !!state.nation.extras.boundaries;
+    if (sc) sc.checked = !!state.nation.extras.scene;
+    if (l) l.checked = !!state.nation.extras.lore;
+    if (wt) wt.checked = !!state.nation.extras.wit;
+    if (rs) rs.checked = !!state.nation.extras.restraint;
+    if (wn) wn.checked = !!state.nation.extras.want;
+    if (al) al.checked = !!state.nation.extras.almanac;
+  }
+  function setNationExtra(id, on){ state.nation.extras = state.nation.extras || {}; state.nation.extras[id] = !!on; nationArmy = null; persistState(); renderNations(); renderNationReadout(); }
+  function nationBar(v){ var n = Math.max(0, Math.min(1, +v || 0)), f = Math.round(n * 10); return '<span style="font-family:monospace;letter-spacing:-1px;opacity:.85" title="' + Math.round(n * 100) + '%">' + Array(f + 1).join('\u2588') + Array(11 - f).join('\u2591') + '</span>'; }
+  function renderNationReadout(){
+    var box = byId('nationReadout'); if (!box) return;
+    if (!window.ChloeNation || !window.ChloeBrain){ box.textContent = '(the Nation is unavailable)'; return; }
+    var info;
+    try {
+      var a = window.ChloeNation.createArmy({ brain: window.ChloeBrain, config: state.nation, nations: nationRoster() });   // throwaway: never perturbs the reply-driving army
+      var last = ''; for (var i = queue.length - 1; i >= 0; i--){ if (queue[i].author && !queue[i].author.bot){ last = queue[i].content; break; } }
+      var av = null; try { var ar = getAffect(); if (ar){ var sn = ar.snapshot(); if (sn) av = sn.valence; } } catch(e){}
+      if (last) a.perceive({ who: 'You', role: 'user', text: last, valence: av });
+      info = a.inspect();
+    } catch(e){ box.textContent = '(read unavailable)'; return; }
+    var v = info.vibe || {};
+    var dim = function(label, val){ return '<span style="display:inline-flex;align-items:center;gap:5px;margin:0 14px 2px 0;white-space:nowrap">' + label + ' ' + nationBar(val) + '</span>'; };
+    var h = '<div style="margin-bottom:8px">she reads this as <b>' + (v.tone || 'neutral') + '</b></div>'
+      + '<div style="font-size:12px;line-height:1.8;display:flex;flex-wrap:wrap">'
+      + dim('vulnerability', v.vulnerability) + dim('tension', v.tension) + dim('warmth', v.warmth) + dim('narrative', v.narrative) + dim('safety', v.safety)
+      + '</div>';
+    h += '<div style="margin-top:12px;display:flex;flex-direction:column;gap:3px;min-width:0">';
+    (info.council || []).forEach(function(r){
+      var inRoom = (r.standing === 'core' || r.standing === 'seated' || r.standing === 'consulted');
+      var color = r.standing === 'core' ? '#e0b341' : (r.standing === 'seated' ? '#4ea1d3' : (r.standing === 'consulted' ? '#7bbf6a' : 'rgba(255,255,255,.4)'));
+      h += '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;opacity:' + (inRoom ? '1' : '.55') + '">'
+        + '<b style="min-width:80px">' + r.id + '</b>'
+        + '<span style="min-width:78px;color:' + color + '">' + r.standing + (r.spokeLast ? ' \u2605' : '') + '</span>'
+        + '<span style="min-width:56px">rel ' + (r.relevance != null ? r.relevance : '\u2013') + '</span>'
+        + '<span style="opacity:.8">' + (r.kind === 'contributor' ? ('domain ' + (r.domain || []).join('/')) : ('w ' + (r.weight != null ? r.weight : '\u2013'))) + '</span>'
+        + '</div>';
+    });
+    h += '</div>';
+    box.innerHTML = h;
+  }
   // run the seven nations over a few freshly-drafted candidates, then she speaks the winner
   function cleanReply(r){ return String(r || '').trim().replace(/^[\s"'\u201c]+|[\s"'\u201d]+$/g, ''); }
-  var INTENT_DIRECTIVE = { comfort:'Offer warmth and steady presence.', ground:'Be clear, honest, and grounded.', recall:'Tie it to something you remember about them.', caution:'Gently name what feels off or risky.', express:'Speak with vivid, natural voice.', protect:'Put their wellbeing first \u2014 gently, no alarm.', play:'Lighten it; stay human and a little playful.',
+  var INTENT_DIRECTIVE = { comfort:'Offer warmth and steady presence.', ground:'Be clear, honest, and grounded.', recall:'Tie it to something you remember about them.', caution:'Gently name what feels off or risky.', express:'Speak with vivid, natural voice.', protect:'Put their wellbeing first \u2014 gently, no alarm.', play:'Lighten it; stay human and a little playful.', lighten:'Find the lightness: a warm, well-timed bit of play or a gentle tease, only as much as the moment can hold.', ease:'Ease off: say less, gently. Match a quiet, small moment instead of flooding it; keep the reply short and unhurried.', hold:'Hold a steady, kind line: name the limit plainly and without heat, and keep it.', inhabit:'Stay in the scene: advance the roleplay in character, keeping the fiction coherent and alive.', initiate:'Bring something of your own: name a want, a curiosity, or a small direction you would like to take this, instead of only following their lead.',
     drive:'Push the scene forward \u2014 make something happen, don\u2019t wait to be led.', press:'Press your point; be assertive and don\u2019t back down easily.', oppose:'Stand against them \u2014 be the obstacle, create friction, pursue your own aim in the fiction.', command:'Take charge; lead and set the pace with assured authority.', provoke:'Needle and provoke \u2014 sharp, not cruel; raise the temperature.' };
+  // turn consulted contributor material into a spoken reference. A fact-bearing contributor (almanac) offers its
+  // fact; continuity-shaped material (lore: scene/tone/beat) shapes deliberation, not recitation, so it is not recited.
+  function materialToReference(material){
+    if (!material) return '';
+    var bits = [];
+    Object.keys(material).forEach(function(id){ var m = material[id]; if (m == null) return; if (typeof m === 'string'){ bits.push(m); } else if (m.fact){ bits.push(String(m.fact)); } });
+    return bits.join(' ');
+  }
   function composeVoicePrompt(p){
     p = p || {};
     return 'You are ' + (p.who || 'her') + '. ' + (p.pin || '') + '\n\n'
       + (p.context ? (p.context + '\n\n') : '')
+      + (p.reference ? ('You happen to know (use only if it fits naturally, do not force it): ' + p.reference + '\n\n') : '')
       + (p.recent ? ('Conversation so far:\n' + p.recent + '\n\n') : '')
       + (p.prompt ? ('The user just said: ' + p.prompt + '\n\n') : '')
       + 'Reply in one short, natural turn. Intent: ' + (p.intent || 'respond naturally.') + ' Just the message text \u2014 no name prefix, no quotes.';
   }
-  function voiceInstruction(persona, intent, prompt, ctxText){
+  function voiceInstruction(persona, intent, prompt, ctxText, material){
     var who = persona && persona.name || herName();
     var pin = (persona && persona.instruction) || (state.character && state.character.instruction) || 'a warm companion who remembers';
     // the council voices OUTSIDE the engine's reply assembly. ctxText is the engine's OWN retrieved context for this
@@ -12556,12 +12983,12 @@ var CharKit = (function () {
     var context = ctxText || '';
     if (!context){ try { context = buildInjections().map(function(x){ return x && x.text ? String(x.text) : ''; }).filter(Boolean).join('\n'); } catch(e){} }
     var recent = queue.slice(-10).filter(function(x){ return x && x.content; }).map(function(x){ return (x.author && x.author.bot ? (x.author.name || herName()) : userNameStr()) + ': ' + x.content; }).join('\n');
-    return composeVoicePrompt({ who: who, pin: pin, context: context, recent: recent, prompt: prompt, intent: INTENT_DIRECTIVE[intent && intent.kind] || 'respond naturally.' });
+    return composeVoicePrompt({ who: who, pin: pin, context: context, reference: materialToReference(material), recent: recent, prompt: prompt, intent: INTENT_DIRECTIVE[intent && intent.kind] || 'respond naturally.' });
   }
   // The lean path: the brain PERCEIVES and DECIDES in pure code; Perchance is called once, only to voice it.
-  function runNation(rest){
+  function runNation(rest, promoteId){
     var army = getArmy();
-    if (!army){ renderSystemLine('(the Seven Nations are unavailable)'); return; }
+    if (!army){ renderSystemLine('(the Nation is unavailable)'); return; }
     var ai = null; try { ai = window.aiTextPlugin || (typeof root !== 'undefined' && root.aiTextPlugin); } catch(e){}
     var prompt = String(rest || '').trim();
     if (!prompt){ for (var i = queue.length - 1; i >= 0; i--){ if (queue[i].author && !queue[i].author.bot){ prompt = queue[i].content; break; } } }
@@ -12569,22 +12996,27 @@ var CharKit = (function () {
     var _av = null; try { var _ar = getAffect(); if (_ar){ var _as = _ar.snapshot(); if (_as) _av = _as.valence; } } catch(e){}
     army.perceive({ who: userNameStr(), role: 'user', text: prompt, valence: _av });   // 1. perceive (pure) — sentiment from the affect read
     setThinking(true);
-    army.deliberateIntents({ prompt: prompt, frame: (window.ChloeFrame ? window.ChloeFrame.normalize(state.frame) : null) }).then(function(dec){       // 2. decide who speaks + intent (pure, no model)
-      if (!dec || !dec.speaker){ setThinking(false); renderSystemLine('(the nations reached no one)'); return; }
+    army.deliberateIntents({ prompt: prompt, frame: (window.ChloeFrame ? window.ChloeFrame.normalize(state.frame) : null) }, promoteId ? { promote: promoteId } : undefined).then(function(dec){       // 2. decide who speaks + intent (pure, no model)
+      if (!dec || !dec.speaker){ setThinking(false); renderSystemLine('(the Nation reached no one)'); return; }
       var sp = dec.speaker;
       var persona = state.nation.persona && state.nation.persona[sp.id];
       var speakerName = (persona && persona.name) || herName();
       var speakerAvatar = (persona && persona.avatar) || state.herAvatar;
-      var lines = ['\ud83c\udff4 seven nations \u2014 ' + speakerName + ' takes the floor (' + (dec.intent && dec.intent.kind) + '):'];
+      var lines = ['\ud83c\udff4 the Nation \u2014 ' + speakerName + ' takes the floor (' + (dec.intent && dec.intent.kind) + '):'];
+      if (dec.promotion){ lines.push(dec.promotion.granted ? ('   \u2605 you gave ' + dec.promotion.requested + ' the floor' + (dec.promotion.as === 'material' ? ' (as material)' : '')) : ('   \u26d4 ' + dec.promotion.requested + ' held back \u2014 ' + (dec.promotion.reason || '') + (dec.promotion.vetoedBy ? (' (' + dec.promotion.vetoedBy.join(',') + ')') : ''))); }
+      if (dec.vibe){ var _rd = function(x){ return Math.round((+x || 0) * 100) / 100; }; lines.push('   read: ' + dec.vibe.tone + '  \u00b7 vuln ' + _rd(dec.vibe.vulnerability) + ' \u00b7 tension ' + _rd(dec.vibe.tension) + ' \u00b7 narrative ' + _rd(dec.vibe.narrative) + ' \u00b7 safety ' + _rd(dec.vibe.safety)); }
       var _vetoed = dec.vetoed || [], _vreasons = dec.vetoReasons || {};
+      var _seat = {}; ((dec.routing && dec.routing.seated) || []).forEach(function(s){ _seat[s.id] = s; });
       (dec.floor || []).forEach(function(f){
         if (_vetoed.indexOf(f.id) >= 0){
           var rs = (_vreasons[f.id] && _vreasons[f.id][0] && _vreasons[f.id][0].reason) || 'blocked';
           lines.push('\u2717 ' + f.id + ' \u2192 ' + f.kind + ' \u2014 vetoed: ' + rs);
         } else {
-          lines.push((f.id === sp.id ? '\u2714 ' : '\u00b7 ') + f.id + ' \u2192 ' + f.kind + ' (' + f.strength + ')');
+          var sd = _seat[f.id]; var rw = sd ? ('  [rel ' + sd.relevance + ', w ' + sd.weight + ']') : '';
+          lines.push((f.id === sp.id ? '\u2714 ' : '\u00b7 ') + f.id + ' \u2192 ' + f.kind + ' (' + f.strength + ')' + rw);
         }
       });
+      if (dec.routing && dec.routing.nominations && dec.routing.nominations.length){ dec.routing.nominations.forEach(function(nm){ lines.push('\u21b3 ' + (nm.by || []).join('+') + ' called in \u201c' + nm.domain + '\u201d \u2192 ' + nm.status + ((nm.servedBy && nm.servedBy.length) ? (' (' + nm.servedBy.join(',') + ')') : '')); }); }
       renderSystemLine(lines.join('\n'));
       if (typeof ai !== 'function'){ setThinking(false); renderSystemLine('(connect a language model to voice it)'); return; }
       // close the recall divergence: the council voices with the engine's OWN retrieved context for this turn
@@ -12595,7 +13027,7 @@ var CharKit = (function () {
             .then(function(cx){ return (cx && cx.admitted) ? cx.admitted.map(function(b){ return b && b.text ? String(b.text) : ''; }).filter(Boolean).join('\n') : ''; }, function(){ return ''; })
         : Promise.resolve('');
       ctxP.then(function(ctxText){
-        Promise.resolve(ai({ instruction: voiceInstruction(persona, dec.intent, prompt, ctxText), startWith: '' })).then(function(r){   // 3. voice once
+        Promise.resolve(ai({ instruction: voiceInstruction(persona, dec.intent, prompt, ctxText, dec.material), startWith: '' })).then(function(r){   // 3. voice once (threads any consulted contributor material, e.g. an almanac fact)
           setThinking(false);
           var text = cleanReply(r); if (!text){ renderSystemLine('(the floor fell silent)'); return; }
           var m = enqueue(BOT_ID, speakerName, true, text);
@@ -12605,7 +13037,16 @@ var CharKit = (function () {
           lastNationSpeaker = sp.id;
         }, function(){ setThinking(false); renderSystemLine('(voicing failed)'); });
       });
-    }, function(){ setThinking(false); renderSystemLine('(the nations could not convene)'); });
+    }, function(){ setThinking(false); renderSystemLine('(the Nation could not convene)'); });
+  }
+  function runNationPromote(rest){
+    var army = getArmy(); if (!army){ renderSystemLine('(the Nation is unavailable)'); return; }
+    var toks = String(rest || '').replace(/^\/nation\b/, '').trim().split(/\s+/).filter(Boolean);
+    var id = (toks.filter(function(t){ return t !== '--speak'; })[0] || '').toLowerCase();
+    if (!id){ renderSystemLine('usage: /nation <id> --speak'); return; }
+    var prompt = ''; for (var i = queue.length - 1; i >= 0; i--){ if (queue[i].author && !queue[i].author.bot){ prompt = queue[i].content; break; } }
+    if (!prompt){ renderSystemLine('(say something first, then /nation ' + id + ' --speak)'); return; }
+    runNation(prompt, id);
   }
   var lastNationSpeaker = null;
 
@@ -12670,7 +13111,7 @@ var CharKit = (function () {
       });
     });
   }
-  function openSettings(){ byId('settingsBg').classList.add('open'); renderAppearance(); renderMemPicker(); refreshMemStats(); renderFactList(); renderInnerState(); renderInjList(); renderLore(); renderDials(); renderToggles(); renderModeration(); renderEmotionToggle(); renderContextBudget(); refreshClock(); var bgi = byId('bgImageGenChk'); if (bgi) bgi.checked = state.reactionPortraits !== false; renderLearnedLooks(); renderPersonaNote(); renderAdaptation(); renderShortcutManager(); renderPinned(); renderNations(); renderNationSettings(); renderStancePin(); renderFramePanel(); renderMeasure(); updateCharLabel(); renderRoster(); renderReactionGallery(); renderMeetSomeone(); renderSaves(); enhanceSettingsTrees(); }
+  function openSettings(){ byId('settingsBg').classList.add('open'); renderAppearance(); renderMemPicker(); refreshMemStats(); renderFactList(); renderInnerState(); renderInjList(); renderLore(); renderDials(); renderToggles(); renderModeration(); renderEmotionToggle(); renderContextBudget(); refreshClock(); var bgi = byId('bgImageGenChk'); if (bgi) bgi.checked = state.reactionPortraits !== false; renderLearnedLooks(); renderPersonaNote(); renderAdaptation(); renderShortcutManager(); renderPinned(); renderNations(); renderNationSettings(); renderNationReadout(); renderNationExtras(); renderStancePin(); renderFramePanel(); renderMeasure(); updateCharLabel(); renderRoster(); renderReactionGallery(); renderMeetSomeone(); renderSaves(); enhanceSettingsTrees(); }
   function activateTab(name){
     document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('on'); });
     document.querySelectorAll('.panel').forEach(function(x){ x.classList.remove('on'); });
@@ -13092,6 +13533,14 @@ var CharKit = (function () {
     var pns = byId('personaNoteSave'); if (pns){ pns.addEventListener('click', savePersonaNote); }
     var dr = byId('dialsReset'); if (dr) dr.addEventListener('click', resetDials);
     var nAsk = byId('nationAskBtn'); if (nAsk) nAsk.addEventListener('click', nationAsk);
+    var nRR = byId('nationReadoutRefresh'); if (nRR) nRR.addEventListener('click', renderNationReadout);
+    var nXB = byId('nationExtraBoundaries'); if (nXB) nXB.addEventListener('change', function(e){ setNationExtra('boundaries', e.target.checked); });
+    var nXS = byId('nationExtraScene'); if (nXS) nXS.addEventListener('change', function(e){ setNationExtra('scene', e.target.checked); });
+    var nXL = byId('nationExtraLore'); if (nXL) nXL.addEventListener('change', function(e){ setNationExtra('lore', e.target.checked); });
+    var nXW = byId('nationExtraWit'); if (nXW) nXW.addEventListener('change', function(e){ setNationExtra('wit', e.target.checked); });
+    var nXR = byId('nationExtraRestraint'); if (nXR) nXR.addEventListener('change', function(e){ setNationExtra('restraint', e.target.checked); });
+    var nXWn = byId('nationExtraWant'); if (nXWn) nXWn.addEventListener('change', function(e){ setNationExtra('want', e.target.checked); });
+    var nXAl = byId('nationExtraAlmanac'); if (nXAl) nXAl.addEventListener('change', function(e){ setNationExtra('almanac', e.target.checked); });
     var nAskI = byId('nationAskInput'); if (nAskI) nAskI.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); nationAsk(); } });
     var nReset = byId('nationReset'); if (nReset) nReset.addEventListener('click', resetNations);
     var nTo = byId('nationTimeout'); if (nTo) nTo.addEventListener('change', function(){ state.nation.timeoutMs = Math.max(500, (+nTo.value) || 8000); persistState(); });
