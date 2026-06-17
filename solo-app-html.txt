@@ -508,7 +508,7 @@
       </div>
       <div class="field">
         <label>Your age</label>
-        <div class="desc">Used only on this device to gate mature content &mdash; never stored or sent anywhere. Below 21, explicit sexual terms are filtered out of image prompts; biology and medical content is unaffected. (Sexual content involving minors is always blocked, regardless of this setting.)</div>
+        <div class="desc">Used only on this device &mdash; never stored or sent anywhere. Below 21, image generation is held to a non-explicit content rating (via the moderation rating ceiling); at 21+ your own rating applies. Hard content limits are enforced by the image platform itself.</div>
         <input type="number" id="userAgeInput" min="0" max="120" placeholder="—" style="max-width:130px">
         <div class="status" id="ageGateNote" style="margin-top:6px"></div>
       </div>
@@ -10717,21 +10717,13 @@ var CharKit = (function () {
    *      posts the result back on window.__chloePaint by reqId. A top-panel root.paintImage relay,
    *      if present, takes precedence (grabPaintImage checks root first). No DSL paste required:
    *      the only top-panel setup is importing the two plugins. Standalone (no plugin) -> SVG demo. ---- */
-  // ---- age attestation + always-on child-safety guard (gates every image prompt at the paint chokepoint) ----
-  // Self-attested age lives only on this device. It does ONE thing: below 21, explicit sexual terms are filtered out
-  // of image prompts; at 21+ they pass. Independent of that and NEVER overridable, a minor-safety guard blocks any
-  // prompt that pairs a youth descriptor with a sexual/nudity cue — this fires regardless of age or any other setting.
+  // ---- age attestation -> content-rating ceiling (consolidated into the existing weld.banlist moderation) ----
+  // Self-attested age lives only on this device. Below 21 (or unset) the image content-rating ceiling is capped to a
+  // non-explicit level; at 21+ the user's own rating applies. We ship NO enumerated term denylist — the platform
+  // backend enforces the hard content limits, and this rating ceiling is the client-side control on top of it.
+  var SAFE_RATING = 'pg13';                                          // under-21 ceiling (a weld.banlist rating value)
   function isAdultContent(){ var a = parseInt(state.userAge, 10); return isFinite(a) && a >= 21; }
-  var YOUTH_CUE  = /\b(child|children|kid|kiddo|minor|under[\s-]?age|underage|pre[\s-]?pubescent|pre[\s-]?teen|preteen|toddler|infant|newborn|loli|lolita|shota|school[\s-]?girl|school[\s-]?boy|grade[\s-]?schooler|kindergarten|little (?:girl|boy)|young (?:girl|boy))\b/i;
-  var YOUTH_AGE  = /\b(?:[0-9]|1[0-7])\s*(?:years?[\s-]?old|y[\s-]?o\b|yo\b)/i;            // ages 0\u201317 stated explicitly
-  var SEX_CUE    = /\b(nude|naked|nsfw|sexual|sexualized|sexy|porn|pornographic|erotic|explicit|nipple|genital|aroused|seductive|provocative|lewd|fetish|bdsm|lingerie|topless|bottomless|undress(?:ed|ing)?|suggestive|in heat)\b/i;
-  var MATURE_TERM = /\b(nsfw|explicit|porn|pornographic|hardcore|nude|naked|topless|bottomless|genital|nipple|erotic|sexual|fellatio|cunnilingus|penetrat\w*|orgasm|aroused|fetish|bdsm|hentai|lewd|cum\b|ejaculat\w*)\b/i;
-  // ALWAYS ON — protects minors no matter what. A youth descriptor (or a stated child age) next to any sexual cue is blocked outright.
-  function minorSafetyBlock(text){
-    var t = String(text || '');
-    if ((YOUTH_CUE.test(t) || YOUTH_AGE.test(t)) && SEX_CUE.test(t)) return { ok: false, reason: 'blocked: this pairs a minor with sexual content and cannot be generated' };
-    return { ok: true };
-  }
+  function effectiveRating(){ var m = state.moderation || {}; return isAdultContent() ? (m.rating || 'x') : SAFE_RATING; }
 
   /* ---- content moderation (weld.banlist pattern): banned phrases (substring + * wildcard) and,
      when weld.banlist is imported, a content-rating ceiling too. Default off; gates image prompts. ---- */
@@ -10740,19 +10732,18 @@ var CharKit = (function () {
       try {
         if (window.weld && window.weld.banlist && window.weld.banlist.create){
           var m = state.moderation || {};
-          return window.weld.banlist.create({ phrases: m.phrases || [], negativePhrases: [], users: [], rating: m.rating || 'x' });
+          return window.weld.banlist.create({ phrases: m.phrases || [], negativePhrases: [], users: [], rating: effectiveRating() });
         }
       } catch(e){}
       return null;
     }
     function checkText(text){
-      var guard = minorSafetyBlock(text);                          // ALWAYS first — never gated by settings or age
-      if (!guard.ok) return guard;
-      if (!isAdultContent() && MATURE_TERM.test(String(text || '')))   // under 21 (or no age set): explicit terms are filtered out
-        return { ok: false, reason: 'mature content is filtered \u2014 confirm you\u2019re 21+ in Settings \u25b8 You to enable' };
-      var m = state.moderation; if (!m || !m.enabled) return { ok: true };
-      var list = weldList();
+      var m = state.moderation || {};
+      var list = weldList();                                        // built with effectiveRating(): below 21 it caps the rating
+      var active = m.enabled || !isAdultContent();                  // the rating ceiling applies by default below 21
+      if (!active) return { ok: true };
       if (list && list.check){ var r = list.check(String(text || '')); return (r && r.ok === false) ? { ok: false, reason: (r.reason || r.matched || 'blocked') } : { ok: true }; }
+      if (!m.enabled) return { ok: true };                          // the inline phrase list runs only when explicitly enabled
       var t = String(text || '').toLowerCase();
       var phrases = m.phrases || [];
       for (var i = 0; i < phrases.length; i++){
@@ -14099,9 +14090,9 @@ var CharKit = (function () {
       if (state.userAge != null && state.userAge !== '') agEl.value = state.userAge;
       var renderAgeGate = function(){
         var a = parseInt(state.userAge, 10);
-        setText('ageGateNote', !isFinite(a) ? 'Mature content is filtered until you confirm your age.'
-          : a >= 21 ? '\u2713 Mature content enabled (21+). Sexual content involving minors stays blocked.'
-          : 'Under 21 \u2014 explicit content stays filtered. Biology/medical content is unaffected.');
+        setText('ageGateNote', !isFinite(a) ? 'Content rating is capped until you confirm your age.'
+          : a >= 21 ? '\u2713 Mature content enabled (21+) \u2014 your moderation rating applies.'
+          : 'Under 21 \u2014 image generation is held to a non-explicit content rating.');
       };
       renderAgeGate();
       agEl.addEventListener('change', function(){ var v = agEl.value.trim(); state.userAge = v === '' ? null : Math.max(0, Math.min(120, parseInt(v, 10) || 0)); if (state.userAge != null) agEl.value = state.userAge; persistState(); renderAgeGate(); });
