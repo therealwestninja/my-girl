@@ -506,6 +506,12 @@
         <div class="desc">What the character calls you. Used naturally, and remembered.</div>
         <input type="text" id="userNameInput" placeholder="You">
       </div>
+      <div class="field">
+        <label>Your age</label>
+        <div class="desc">Used only on this device to gate mature content &mdash; never stored or sent anywhere. Below 21, explicit sexual terms are filtered out of image prompts; biology and medical content is unaffected. (Sexual content involving minors is always blocked, regardless of this setting.)</div>
+        <input type="number" id="userAgeInput" min="0" max="120" placeholder="—" style="max-width:130px">
+        <div class="status" id="ageGateNote" style="margin-top:6px"></div>
+      </div>
       <div class="card">
         <h3>Tell the character about you</h3>
         <div class="note">Anything the character should keep in mind about you — pinned, so it sticks. Add them one at a time.</div>
@@ -532,7 +538,7 @@
       <div class="card">
         <h3>Images</h3>
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="bgImageGenChk"><div><div class="tl">Generate reaction portraits in the background</div><div class="td">paint her VN-style emotion cutouts during idle time; turn off to stop all background image generation</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="imagePromptExpandChk"><div><div class="tl">Enrich image prompts with AI</div><div class="td">turn a short request into a vivid, detailed prompt before drawing &mdash; sharper, more on-target images. Style: <select id="imagePromptCreativitySel" style="margin-left:4px"><option value="0">faithful &mdash; stays literal</option><option value="1">balanced &mdash; fresh angle</option><option value="2">creative &mdash; reinterprets</option></select></div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><div><div class="tl">Art style</div><div class="td">prepend a curated look to every image &mdash; anime, oil painting, photoreal, 3D, and more. <select id="imageStyleSel" style="margin-left:4px"></select></div></div></div><div class="td">build a richer, more detailed prompt before drawing &mdash; curated descriptors, your learned looks, and a style dial. Runs locally, no external model. Style: <select id="imagePromptCreativitySel" style="margin-left:4px"><option value="0">faithful &mdash; light detail</option><option value="1">balanced &mdash; varied framing</option><option value="2">creative &mdash; bold style</option></select></div></div></div>
         <div class="note" style="margin-top:14px">Looks she's learned from your feedback edits &mdash; folded into every portrait she paints. Remove any that aren't right, or teach her one directly.</div>
         <div class="learnList" id="learnedLooksList"></div>
         <div class="row" style="margin-top:8px"><input class="learnInput" id="learnNoteInput" placeholder="teach a look, e.g. silver hair, green eyes"><button class="btn" id="learnNoteAdd">Teach</button></div>
@@ -730,6 +736,8 @@
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraWarden"><div><div class="tl">warden</div><div class="td">her self-respect — the one guard that protects <i>her</i>, not you. If you turn on her as a person (hostility, insults, demeaning demands) she refuses plainly and won't answer it eager or playful. Stands down inside a scene (in-character heat is consensual) and on a warm turn. Off by default.</div></div></div>
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraDefiance"><div><div class="tl">defiance</div><div class="td">the RP adversary — a discrete antagonist that refuses what you want and stands in the way of your aim. Seats only inside a <i>contested</i> scene (tension within the fiction), stands down when it's warm or anyone's vulnerable, and pairs with an adversary/commands frame. Off by default.</div></div></div>
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraDeflect"><div><div class="tl">deflect</div><div class="td">evasion — the lightest refusal. Sidesteps, gives little away, redirects when you press on a guarded, tense moment. Stands down when it's warm or someone's hurting (it won't stonewall a vulnerable person). Off by default.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraLead"><div><div class="tl">lead</div><div class="td">initiative with authority — where <i>want</i> brings a small want, lead <b>takes charge</b>: sets the direction, makes the call, and (with others in the scene) gives them a part to play and addresses them by name. Seats when there's room to drive, stands down over anyone vulnerable, and sharpens into command under a commanding stature. Off by default.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraGuile"><div><div class="tl">guile</div><div class="td">in-fiction cunning — a villain's tool. She can <b>lie or feint within the story</b> to serve her role. Triple-gated: it only deceives when you've cast her as an <i>adversary</i> (the role frame), only inside a contested scene, and never when it's warm or anyone's vulnerable. Pure roleplay deception, in character. Off by default.</div></div></div>
         <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraAlmanac"><div><div class="tl">almanac <span style="opacity:.6">(contributor)</span></div><div class="td">a small built-in book of facts across subjects (astronomy, geography, biology, history…). When the talk turns to something it knows it supplies a fitting fact for her to draw on; it stays quiet over a hurting moment, and never votes.</div></div></div>
       </div>
       <div class="card">
@@ -742,7 +750,7 @@
         <h3>How the council decides</h3>
         <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="nationReplyChk"><div><div class="tl">Let the council choose her replies</div><div class="td">each reply drafts a few candidates and the council votes on them, instead of the single engine reply. Off by default.</div></div></div>
         <div class="field" style="margin-top:12px"><label>Deliberation timeout</label><div class="desc">How long a faculty may take before it’s timed out to a default vote (ms).</div><input type="number" id="nationTimeout" min="500" step="500"></div>
-        <div class="field" style="margin-top:12px"><label>Spontaneity</label><div class="desc">A faint, low-level jitter in their votes so she's less static — at 0 the vote is fully deterministic. Kept weak.</div><div class="row" style="align-items:center;gap:10px"><input type="range" id="nationNoise" min="0" max="20" step="1" style="flex:1"><span class="nationW" id="nationNoiseVal">4%</span></div></div>
+        <div class="field" style="margin-top:12px"><label>Spontaneity</label><div class="desc">How much she varies from turn to turn. At 0 she's fully deterministic &mdash; the same read always seats the same faculties and picks the same intent. Higher up, a low-level jitter wobbles <i>which</i> faculties speak and lets a close runner-up sometimes take the floor, so she's less static. Gentle by default.</div><div class="row" style="align-items:center;gap:10px"><input type="range" id="nationNoise" min="0" max="50" step="1" style="flex:1"><span class="nationW" id="nationNoiseVal">4%</span></div></div>
       </div>
       <div class="card">
         <h3>How I've adapted to you</h3>
@@ -768,6 +776,7 @@
       <div class="card">
         <h3>Role frame</h3>
         <div class="note">Who drives the story and what she is in it. By default she's a warm companion and you lead. Change these to let her run the scene, be a neutral or opposing force (a villain, a beast, an indifferent world), or take the dominant or yielding role in a dynamic. A consensual fiction you can end any time \u2014 <code>/frame off</code> or the button returns her to companion. Same as <code>/frame</code>.</div>
+        <div class="row" id="framePresets" style="margin-top:8px;gap:6px;flex-wrap:wrap"></div>
         <div class="row" style="margin-top:8px;gap:12px;flex-wrap:wrap;align-items:center">
           <label class="status">Drive <select id="frameDrive"><option value="you">You lead</option><option value="shared">Shared (party)</option><option value="she">She leads</option></select></label>
           <label class="status">Toward you <select id="frameAlign"><option value="ally">Ally</option><option value="neutral">Neutral</option><option value="adversary">Adversary</option></select></label>
@@ -866,6 +875,7 @@
   <div id="lightbox" class="lightbox" style="display:none">
     <img id="lightboxImg" alt="">
     <div id="lightboxCap" class="lightbox-cap"></div>
+    <button id="lightboxBecome" class="tbtn" style="background:var(--accent);color:#fff;border:none">\u2728 Become this character</button>
     <button class="lightbox-x" id="lightboxClose">✕</button>
   </div>
 </div>
@@ -9226,6 +9236,18 @@ var CharKit = (function () {
     { id: 'deflect', purpose: 'Sidestep \\u2014 give little away and redirect when they press where she won\\u2019t open up.', lean: { calm: 0.7, clear: 0.4 },
       domain: ['support'],
       relevance: function (v) { return clamp01(0.15 + v.tension * 0.6 + neg(v.sentiment) * 0.25 - v.warmth * 0.5 - v.vulnerability * 0.6); } },
+    // `lead` is initiative with authority (opt-in): where `want` brings a small want, lead TAKES CHARGE \u2014 sets the
+    // direction, makes the call, and (with others present) gives them a part. Seats in a scene with room to drive,
+    // stands down over anyone vulnerable, and under a commanding stature it sharpens into outright command.
+    { id: 'lead', purpose: 'Take charge \\u2014 set the direction, make the call, and give the others a part to play.', lean: { clear: 0.7, open: 0.5, play: 0.2 },
+      domain: ['agency', 'scene'],
+      relevance: function (v) { return clamp01(0.1 + v.narrative * 0.4 + v.openness * 0.3 + pos(v.sentiment) * 0.15 - v.vulnerability * 0.8); } },
+    // `guile` is in-fiction cunning (opt-in): a villain's tool. Triple-gated so it never deceives lightly \u2014 it
+    // SEATS only inside a contested scene (and stands down over anyone warm or vulnerable), and even then it only
+    // proposes `deceive` when the frame casts her as an ADVERSARY (see intend). Otherwise it just stays in the scene.
+    { id: 'guile', purpose: 'Mislead within the fiction \\u2014 a lie or a feint in service of her role \\u2014 but only as an adversary.', lean: { clear: 0.6, play: 0.4 },
+      domain: ['roleplay', 'scene'],
+      relevance: function (v) { return clamp01(0.05 + v.narrative * 0.5 + v.tension * 0.3 - v.warmth * 0.5 - v.vulnerability * 0.8); } },
     // `almanac` is a self-contained CONTRIBUTOR (it supplies material, never votes). It is consulted on a SAFE turn
     // (benched when the room is vulnerable/tense, so it never offers trivia over a hurting person), and its `consult`
     // looks the user's text up in the bundled ALMANAC book - returning a fitting fact or null. Proves the Dewey-scale
@@ -9280,7 +9302,7 @@ var CharKit = (function () {
     want:       { warmth: 0.6, humor: 0.3, distress: -0.8, anger: -0.6 }   // opt-in (EXTRAS): leans in where there is space; pulls back hard on a hurting or angry room
   };
   // each nation's natural intent — the move it reaches for
-  var INTENT = { heart: 'comfort', reason: 'ground', memory: 'recall', instinct: 'caution', voice: 'express', conscience: 'protect', play: 'play', boundaries: 'hold', scene: 'inhabit', wit: 'lighten', restraint: 'ease', want: 'initiate', warden: 'rebuff', defiance: 'deny', deflect: 'deflect' };
+  var INTENT = { heart: 'comfort', reason: 'ground', memory: 'recall', instinct: 'caution', voice: 'express', conscience: 'protect', play: 'play', boundaries: 'hold', scene: 'inhabit', wit: 'lighten', restraint: 'ease', want: 'initiate', warden: 'rebuff', defiance: 'deny', deflect: 'deflect', lead: 'direct', guile: 'inhabit' };
 
   // Under an explicit role frame that licenses force (she drives, she opposes, or she commands), a few nations'
   // drives express as force instead of support — voice presses/opposes/commands, reason drives the scene, play
@@ -9296,6 +9318,7 @@ var CharKit = (function () {
     if (id === 'reason') { return (f.alignment === 'adversary') ? 'press' : 'drive'; }
     if (id === 'play') { return (f.alignment === 'adversary') ? 'provoke' : base; }
     if (id === 'want') { return (f.stature === 'commands') ? 'command' : (f.alignment === 'adversary') ? 'press' : 'drive'; }   // agency under a frame becomes taking the lead
+    if (id === 'lead') { return (f.stature === 'commands') ? 'command' : base; }   // leadership under a commanding stature becomes outright command
     return base;
   }
 
@@ -9416,6 +9439,8 @@ var CharKit = (function () {
       var pull = Math.abs(felt(cues));
       var strength = clamp01(0.3 + self.mood * 0.3 + pull * 0.15 + (self.persona ? 0.15 : 0));
       var kind = intentFor(nation.id, ctx && ctx.frame);
+      if (nation.id === 'warden' && vibe && vibe.hurt >= 0.6) kind = 'wounded';   // sustained hostility wears the rebuff down into visible hurt
+      if (nation.id === 'guile' && ctx && ctx.frame && ctx.frame.alignment === 'adversary') kind = 'deceive';   // cunning only turns to a lie when she's cast as the adversary; otherwise she just stays in the scene
       strength = clamp01(modulate(nation.id, kind, strength, vibe));   // PASS 2 — self-adjust to the vibe before the veto
       return { by: self.id, kind: kind, strength: strength, persona: self.persona };
     }
@@ -9486,8 +9511,9 @@ var CharKit = (function () {
         if (isCore(m.self.id)) core.push(m);
         else if (isOn(m.self.id)) pool.push(m);
       });
+      var jr = {}; pool.forEach(function (m) { jr[m.self.id] = jitter(relevanceOf(m.self.id, vibe)); });   // spontaneity wobbles WHICH extras make the cut (identity at 0)
       pool.sort(function (a, b) {                            // most relevant first; stable by roster order on a tie
-        var d = relevanceOf(b.self.id, vibe) - relevanceOf(a.self.id, vibe);
+        var d = jr[b.self.id] - jr[a.self.id];
         return d !== 0 ? d : ord[a.self.id] - ord[b.self.id];
       });
       var take = Math.max(0, seatBudget(delibs.length) - core.length);
@@ -9501,6 +9527,22 @@ var CharKit = (function () {
     // a very weak, low-level jitter so the ecosystem isn't perfectly static. Defaults to 0 (deterministic);
     // the mouth sets a small live value. Bounded: a score never moves more than `noise` of itself.
     function jitter(s) { var n = Number(cfg.noise) || 0; return n <= 0 ? s : Math.max(0, s * (1 + n * (rng() * 2 - 1))); }
+    // Spontaneity also softens the WINNER pick: above 0, sample from the vote tally (softmax) instead of strict
+    // argmax, so a close runner-up sometimes takes the floor. At 0 it returns null and the deterministic argmax
+    // stands untouched. T rises with noise: a little noise barely bends toward argmax; a lot flattens the field.
+    function sampleWinner(proposals, ballots, vetoed, noise) {
+      if (!(noise > 0)) return null;
+      var live = proposals.filter(function (p) { return vetoed.indexOf(p.by) < 0; });
+      if (live.length < 2) return null;
+      var tally = {}; live.forEach(function (p) { tally[p.by] = 0; });
+      ballots.forEach(function (b) { if (b && b.scores) live.forEach(function (p) { tally[p.by] += Number(b.scores[p.by]) || 0; }); });
+      var vals = live.map(function (p) { return tally[p.by]; });
+      var max = Math.max.apply(null, vals), span = (max - Math.min.apply(null, vals)) || 1;
+      var T = 0.05 + noise * 0.7, w = live.map(function (p) { return Math.exp(((tally[p.by] - max) / span) / T); });
+      var sum = w.reduce(function (a, b) { return a + b; }, 0), r = rng() * sum, acc = 0;
+      for (var i = 0; i < live.length; i++) { acc += w[i]; if (r <= acc) return live[i].by; }
+      return live[live.length - 1].by;
+    }
 
     // Run the live nations over a few candidate replies; tally their weighted votes through the Brain sub-system.
     function deliberate(candidates, ctx) {
@@ -9581,7 +9623,7 @@ var CharKit = (function () {
     function mindOf(id) { for (var i = 0; i < minds.length; i++) if (minds[i].self.id === id) return minds[i]; return null; }
     function syncPersonas() { var per = cfg.persona || {}; deliberatorMinds().forEach(function (m) { m.setPersona(per[m.self.id] || null); }); }
     syncPersonas();
-    var state = { lastSpeaker: null, lastText: null, turns: 0, lastUserText: null, lastUserValence: null };
+    var state = { lastSpeaker: null, lastText: null, turns: 0, lastUserText: null, lastUserValence: null, hurtStreak: 0 };
     function societySentiment() { var dm = deliberatorMinds(); var s = 0; dm.forEach(function (m) { s += m.user.sentiment; }); return r2(s / (dm.length || 1)); }
     function meanEngagement() { var dm = deliberatorMinds(); var s = 0; dm.forEach(function (m) { s += m.user.engagement; }); return r2(s / (dm.length || 1)); }
     function deliberatorMinds() { return minds.filter(function (m) { return rosterKind(m.self.id) === 'deliberator'; }); }
@@ -9655,8 +9697,13 @@ var CharKit = (function () {
         openness:      clamp01(cues.question),
         narrative:     clamp01(sat(emotes))                                        // scene/roleplay beat (v2)
       };
+      // sustained hostility aimed at HER wears her down. Rises after a couple of hits, suppressed inside an active
+      // scene (in-character heat is consensual), and it deepens her vulnerability so the council reads her as hurting.
+      vibe.hurt = r2(clamp01((state.hurtStreak - 2) / 6) * (1 - vibe.narrative * 0.7));
+      if (vibe.hurt > 0) vibe.vulnerability = clamp01(vibe.vulnerability + vibe.hurt * 0.5);
       vibe.safety = clamp01(1 - Math.max(vibe.tension, vibe.vulnerability * 0.7));
       vibe.tone = toneOf(vibe);
+      if (vibe.hurt >= 0.6) vibe.tone = 'wounded';                                 // worn past rebuff into visible hurt
       return Object.freeze(vibe);                            // strategy reads, never writes
     }
 
@@ -9666,7 +9713,13 @@ var CharKit = (function () {
       var reactions = [];
       deliberatorMinds().forEach(function (m) { m.perceive(turn); reactions.push(m.react(turn)); });   // specialists don't feel
       state.turns++;
-      if (turn.role === 'user') { state.lastUserText = turn.text; state.lastUserValence = (turn.valence != null) ? turn.valence : null; }
+      if (turn.role === 'user') {
+        state.lastUserText = turn.text; state.lastUserValence = (turn.valence != null) ? turn.valence : null;
+        var hr = read(turn.text);                                                              // hostility aimed AT her builds; warmth mends it, a neutral turn lets it cool
+        if (hr.anger >= 1 && hr.warmth < 1) state.hurtStreak = Math.min(12, state.hurtStreak + 1);
+        else if (hr.warmth >= 1 || (turn.valence != null && turn.valence > 0.2)) state.hurtStreak = Math.max(0, state.hurtStreak - 3);
+        else state.hurtStreak = Math.max(0, state.hurtStreak - 1);
+      }
       return { cues: read(turn.text), sentiment: societySentiment(), reactions: reactions };
     }
 
@@ -9693,6 +9746,10 @@ var CharKit = (function () {
         live.forEach(function (m) { proposals.forEach(function (p) { var v = m.veto && m.veto(p); if (v) vetoes.push(v); }); });
         var decide = (brain && brain.resolve) ? brain.resolve : localResolve;
         var decision = decide(proposals, ballots, vetoes, { vetoQuorum: 1 });
+        if (!opts.promote) {                                  // addressing already overrides the vote; never resample over it
+          var sampled = sampleWinner(proposals, ballots, decision.vetoed || [], Number(cfg.noise) || 0);
+          if (sampled) decision.winnerId = sampled;           // spontaneity may hand the floor to a close runner-up
+        }
         var win = proposals.filter(function (p) { return p.by === decision.winnerId; })[0] || proposals[0];
         decision.speaker = win ? mindOf(win.by).self : null;
         decision.intent = win ? win.intent : null;
@@ -10354,6 +10411,7 @@ var CharKit = (function () {
     reactionPortraits:true,   // generate VN-style emotion cutouts during idle time (overridable)
     reactionFeedback:false, imageStyleNotes:[],   // 'provide feedback' switch + the looks/preferences learned from edits
     imagePromptExpand:true, imagePromptCreativity:0,   // AI-enrich a terse request into a vivid prompt before drawing (0 faithful / 1 balanced / 2 creative); off = the terse deterministic prompt
+    imageLikedStyles:[],   // aesthetic descriptors harvested from images you favorite — folded into future prompts ("voting improves generations")
     personality:{ kindness:0.5, sarcasm:0.5, curiosity:0.5, playfulness:0.5, formality:0.5, verbosity:0.5 },
     nation:{ weights:{}, enabled:{}, persona:{}, timeoutMs:8000, useForReplies:false, noise:0.04 },   // the Seven Nations (Settings > Brain)
     stanceActs:false,   // opt-in: let inferred stance steer behavior (currently the roleplay image yes-and). Default off.
@@ -10494,6 +10552,7 @@ var CharKit = (function () {
     try { var fd = window.ChloeFrame ? window.ChloeFrame.directive(state.frame) : ''; if (fd) list.splice(1, 0, { id:'roleframe', at: bc.now, text: fd, priority: 80 }); } catch(e){}
     // affect colors her VOICE (not the words): a short tone line when the emotional tenor is notable, off if toggled off
     try { if (state.feltVoice !== false && window.ChloeAffect){ var ar = getAffect(); if (ar){ var fl = window.ChloeAffect.feltDirective(ar.snapshot()); if (fl) list.push({ id:'feltvoice', at: bc.now, text: fl }); } } } catch(e){}
+    try { var sr = sceneRoster(); if (sr) list.push({ id:'sceneroster', at: bc.now, text: sr, priority: 70 }); } catch(e){}   // every character is aware of the others (name + gist)
     return list;
   }
   function refreshClock(){
@@ -10658,6 +10717,22 @@ var CharKit = (function () {
    *      posts the result back on window.__chloePaint by reqId. A top-panel root.paintImage relay,
    *      if present, takes precedence (grabPaintImage checks root first). No DSL paste required:
    *      the only top-panel setup is importing the two plugins. Standalone (no plugin) -> SVG demo. ---- */
+  // ---- age attestation + always-on child-safety guard (gates every image prompt at the paint chokepoint) ----
+  // Self-attested age lives only on this device. It does ONE thing: below 21, explicit sexual terms are filtered out
+  // of image prompts; at 21+ they pass. Independent of that and NEVER overridable, a minor-safety guard blocks any
+  // prompt that pairs a youth descriptor with a sexual/nudity cue — this fires regardless of age or any other setting.
+  function isAdultContent(){ var a = parseInt(state.userAge, 10); return isFinite(a) && a >= 21; }
+  var YOUTH_CUE  = /\b(child|children|kid|kiddo|minor|under[\s-]?age|underage|pre[\s-]?pubescent|pre[\s-]?teen|preteen|toddler|infant|newborn|loli|lolita|shota|school[\s-]?girl|school[\s-]?boy|grade[\s-]?schooler|kindergarten|little (?:girl|boy)|young (?:girl|boy))\b/i;
+  var YOUTH_AGE  = /\b(?:[0-9]|1[0-7])\s*(?:years?[\s-]?old|y[\s-]?o\b|yo\b)/i;            // ages 0\u201317 stated explicitly
+  var SEX_CUE    = /\b(nude|naked|nsfw|sexual|sexualized|sexy|porn|pornographic|erotic|explicit|nipple|genital|aroused|seductive|provocative|lewd|fetish|bdsm|lingerie|topless|bottomless|undress(?:ed|ing)?|suggestive|in heat)\b/i;
+  var MATURE_TERM = /\b(nsfw|explicit|porn|pornographic|hardcore|nude|naked|topless|bottomless|genital|nipple|erotic|sexual|fellatio|cunnilingus|penetrat\w*|orgasm|aroused|fetish|bdsm|hentai|lewd|cum\b|ejaculat\w*)\b/i;
+  // ALWAYS ON — protects minors no matter what. A youth descriptor (or a stated child age) next to any sexual cue is blocked outright.
+  function minorSafetyBlock(text){
+    var t = String(text || '');
+    if ((YOUTH_CUE.test(t) || YOUTH_AGE.test(t)) && SEX_CUE.test(t)) return { ok: false, reason: 'blocked: this pairs a minor with sexual content and cannot be generated' };
+    return { ok: true };
+  }
+
   /* ---- content moderation (weld.banlist pattern): banned phrases (substring + * wildcard) and,
      when weld.banlist is imported, a content-rating ceiling too. Default off; gates image prompts. ---- */
   var Moderation = (function(){
@@ -10671,6 +10746,10 @@ var CharKit = (function () {
       return null;
     }
     function checkText(text){
+      var guard = minorSafetyBlock(text);                          // ALWAYS first — never gated by settings or age
+      if (!guard.ok) return guard;
+      if (!isAdultContent() && MATURE_TERM.test(String(text || '')))   // under 21 (or no age set): explicit terms are filtered out
+        return { ok: false, reason: 'mature content is filtered \u2014 confirm you\u2019re 21+ in Settings \u25b8 You to enable' };
       var m = state.moderation; if (!m || !m.enabled) return { ok: true };
       var list = weldList();
       if (list && list.check){ var r = list.check(String(text || '')); return (r && r.ok === false) ? { ok: false, reason: (r.reason || r.matched || 'blocked') } : { ok: true }; }
@@ -11047,30 +11126,71 @@ var CharKit = (function () {
   // Looks/preferences she's learned from feedback edits, folded into every future image prompt. Guarded so
   // the factory stays callable (and testable) when there's no app state around it.
   function learnedStyleNotes(){ try { var n = (state.imageStyleNotes || []); return n.length ? (', ' + n.join(', ')) : ''; } catch(e){ return ''; } }
-  function imageExpandRules(cre){   // graded like the prompt-optimizer: 0 faithful, 1 balanced, 2 creative
-    if (cre >= 2) return 'Reinterpret it vividly: keep the core subject recognizable, but take real creative license with mood, lighting, composition, palette, and style \u2014 aim for something striking the user might not have pictured.';
-    if (cre === 1) return 'Keep the subject and every explicit detail of the request intact, but give it a fresh, vivid angle in mood, lighting, composition, and palette. A fresh take, not a departure.';
-    return 'Stay literal: include every detail the request specifies, layer in concrete vivid descriptors, and restate the key subject a couple of different ways so the image model cannot miss it. Add nothing the request did not ask for.';
+  // "Voting improves generations": favoriting an image harvests the AESTHETIC of its prompt — lighting, mood, art
+  // style, palette, framing (a curated vocabulary, NOT the subject and NOT her appearance) — into a learned-style
+  // channel that future enrichment folds in. Deterministic, no model call: it reads style words that are already there.
+  var STYLE_VOCAB = [
+    'cinematic','dramatic lighting','soft light','golden hour','backlit','moody','high contrast','neon','candlelit','natural light','studio lighting','rim light','volumetric',
+    'chiaroscuro','subsurface scattering','soft shadows','dramatic shadows','ambient light','god rays',                                       // + mined: lighting
+    'ethereal','dreamy','gritty','somber','vibrant','muted','atmospheric','minimalist','surreal',
+    'painterly','photorealistic','watercolor','oil painting','anime','illustrated','digital art','sketch','line art','impressionist','concept art','cel shaded',
+    '3d render','low poly','matte painting','gouache','pencil sketch','screencap','semi-realistic','kawaii','digital painting','airbrushed','alla prima',          // + mined: art style / render
+    'pastel','monochrome','sepia','vivid colors','earth tones','jewel tones','warm tones','cool tones',
+    'saturated','desaturated','iridescent','high saturation',                                                                                 // + mined: palette
+    'bokeh','depth of field','wide shot','close-up','macro','intricate','film grain',
+    'portrait','full body','low angle','establishing shot','subtle imperfections','glossy'                                                    // + mined: framing / texture
+  ];
+  function harvestStyleTerms(prompt){ var p = String(prompt || '').toLowerCase(); return STYLE_VOCAB.filter(function(t){ return p.indexOf(t) !== -1; }); }
+  function learnLikedStyle(prompt){
+    var terms = harvestStyleTerms(prompt); if (!terms.length) return [];
+    state.imageLikedStyles = state.imageLikedStyles || [];
+    var fresh = terms.filter(function(t){ return state.imageLikedStyles.indexOf(t) < 0; });
+    terms.forEach(function(t){ var i = state.imageLikedStyles.indexOf(t); if (i >= 0) state.imageLikedStyles.splice(i, 1); state.imageLikedStyles.unshift(t); });   // most-recent-first, dedup
+    while (state.imageLikedStyles.length > 6) state.imageLikedStyles.pop();
+    persistState();
+    return fresh;
   }
-  // Turn a terse request into one vivid image-generation prompt (mined from the image-prompt optimizer): graded
-  // creativity, the user's learned visual preferences folded in, the key subject repeated for a stubborn image
-  // model, bracket-safe. Any failure (or expansion off / no model) falls straight back to the original prompt.
-  function expandImagePrompt(raw){
+  function likedStyleNotes(){ try { var n = (state.imageLikedStyles || []); return n.length ? n.join(', ') : ''; } catch(e){ return ''; } }
+  // Deterministic, Brain-system prompt enrichment (NO external model call). Perchance's ai-text model is stale, so
+  // instead of round-tripping a terse request through it we build a richer prompt the way the engine already does for
+  // edits/portraits: curated quality + style descriptors graded by the creativity dial, the user's learned looks
+  // folded in, and {a|b} variety blocks the scrubber resolves fresh each call. Bracket-safe; falls back to raw.
+  var IMG_QUALITY = [
+    '(highly detailed:1.2), sharp focus, intricate, {natural|true-to-life} texture, subtle imperfections',                                              // 0 faithful
+    '(highly detailed:1.2), sharp focus, fine detail, {cinematic|editorial|natural|candid} framing, {soft|volumetric|directional} light, depth of field', // 1 balanced
+    '(highly detailed:1.3), {cinematic|dramatic|painterly|moody} style, {bold|rich|ethereal} atmosphere, {expressive brushwork|striking composition|chiaroscuro}' // 2 creative
+  ];
+  // Named art-style presets (mined from the static-generator pipelines, rewritten generic & IP-clean): a curated look
+  // prepended to every image prompt. Plain comma text — no brace/bracket traps. 'Default' prepends nothing.
+  var IMG_STYLES = [
+    { id:'',          label:'Default (no style)', prompt:'' },
+    { id:'photoreal', label:'Photoreal',     prompt:'professional photography, photorealistic, hyper-detailed, natural skin texture, sharp focus, cinematic lighting' },
+    { id:'cinematic', label:'Cinematic',     prompt:'cinematic film still, dramatic moody lighting, strong contrast, shallow depth of field, color graded' },
+    { id:'anime',     label:'Anime',         prompt:'anime illustration, clean linework, cel shading, vibrant colors, expressive' },
+    { id:'anime3d',   label:'Anime 3D',      prompt:'stylized 3D anime render, subsurface scattering, soft cinematic lighting, realistic skin' },
+    { id:'oil',       label:'Oil Painting',  prompt:'alla prima oil painting, visible brushwork, rich impasto, painterly' },
+    { id:'watercolor',label:'Watercolor',    prompt:'soft watercolor painting, delicate washes, bleeding pigment, paper texture' },
+    { id:'pencil',    label:'Pencil Sketch', prompt:'black and white pencil drawing, graphite shading, hand-drawn linework' },
+    { id:'concept',   label:'Concept Art',   prompt:'breathtaking digital concept art, painterly, dramatic composition, highly detailed' },
+    { id:'comic',     label:'Comic',         prompt:'graphic-novel comic art, bold inked linework, flat color, halftone shading' },
+    { id:'render3d',  label:'3D Render',     prompt:'high-quality 3D render, modern game cinematic, PBR materials, subsurface scattering, AAA graphics' },
+    { id:'retro',     label:'Retro Game',    prompt:'low-poly retro 3D render, visible polygons, low-resolution textures, early-2000s console aesthetic' }
+  ];
+  function imageStyleString(){ var id = state.imageStyle || ''; for (var i = 0; i < IMG_STYLES.length; i++){ if (IMG_STYLES[i].id === id) return IMG_STYLES[i].prompt; } return ''; }
+  function enrichImagePrompt(raw){
     raw = String(raw || '').trim();
-    var ai = null; try { ai = window.aiTextPlugin || (typeof root !== 'undefined' && root && root.aiTextPlugin); } catch(e){}
-    if (!state.imagePromptExpand || typeof ai !== 'function' || raw.length < 2) return Promise.resolve(raw);
-    var notes = learnedStyleNotes().replace(/^,\s*/, '');
-    var instr = 'You are writing a single prompt for an image-generation model.\n\nThe request: ' + raw + '\n\n'
-      + imageExpandRules(state.imagePromptCreativity | 0)
-      + (notes ? ('\nAlways honour these learned visual preferences: ' + notes + '.') : '')
-      + '\n\nOutput ONLY the finished prompt on one line \u2014 no commentary, no quotes, no markdown, no bracketed alternatives.';
-    try {
-      return Promise.resolve(ai({ instruction: instr, startWith: '' })).then(function(r){
-        var first = String(r == null ? '' : r).split('\n')[0];
-        var t = scrubImagePrompt(first.replace(/^[\s"'\u201c]+|[\s"'\u201d]+$/g, '').trim());
-        return (t && t.replace(/[^a-z0-9]/ig, '').length >= 3) ? t.slice(0, 400) : raw;   // never return an empty/degenerate prompt
-      }, function(){ return raw; });
-    } catch(e){ return Promise.resolve(raw); }   // a model that throws synchronously still falls back cleanly
+    if (raw.length < 2) return raw;
+    var styleStr = imageStyleString();
+    if (!state.imagePromptExpand){                                  // style still applies on its own, even with full enrichment off
+      if (!styleStr) return raw;
+      var so = scrubImagePrompt(styleStr + ', ' + raw).slice(0, 400);
+      return (so && so.replace(/[^a-z0-9]/ig, '').length >= 3) ? so : raw;
+    }
+    var cre = Math.max(0, Math.min(2, state.imagePromptCreativity | 0));
+    var notes = learnedStyleNotes().replace(/^,\s*/, ''), liked = likedStyleNotes();
+    var bits = []; if (styleStr) bits.push(styleStr); bits.push(raw, IMG_QUALITY[cre]); if (notes) bits.push(notes); if (liked) bits.push(liked);
+    var out = scrubImagePrompt(bits.join(', ')).slice(0, 400);
+    return (out && out.replace(/[^a-z0-9]/ig, '').length >= 3) ? out : raw;   // never paint an empty/degenerate prompt
   }
   function reactionPrompt(desc, emotion){
     var base = String(desc || 'a warm, thoughtful presence').replace(/\s+/g, ' ').slice(0, 200);
@@ -11642,15 +11762,17 @@ var CharKit = (function () {
   }
   // a compact "who else is here" line so a speaker is aware of the OTHER characters present (name + a one-line gist
   // of who they are), not just whoever happens to have spoken recently. Empty when solo (nobody else to know about).
-  function sceneRoster(exceptId){
+  // A neutral "who's in the scene" line surfaced to EVERY character's engine (via buildInjections), so each one is
+  // aware of the others by name + a one-line gist of who they are — not just whoever spoke last. Empty when solo.
+  function sceneRoster(){
     var ms = activeMembers(); if (ms.length < 2) return '';
-    var bits = ms.filter(function(m){ return m.id !== exceptId; }).map(function(m){
+    var bits = ms.map(function(m){
       var instr = m.isBot ? ((state.character && state.character.instruction) || '') : ((m.ref && m.ref.instruction) || '');
       var flat = String(instr || '').replace(/\s+/g, ' ').trim(), cut = flat.match(/^[^.!?]{0,90}/);
       var gist = (cut ? cut[0] : flat).trim();
       return m.name + (gist ? (' \u2014 ' + gist) : '');
     });
-    return bits.length ? ('Also here in the scene with you: ' + bits.join('; ') + '. You\u2019re aware they\u2019re present.') : '';
+    return 'Characters present in this scene: ' + bits.join('; ') + '. Each is their own person with their own memory \u2014 speak only as yourself, and address the others by name when it fits.';
   }
   function primaryIdEff(){                                      // who answers when no one is named; survives removals
     var act = activeMembers();
@@ -12438,13 +12560,12 @@ var CharKit = (function () {
     if (prompt.length < 2){ renderSystemLine('(give me something to draw, e.g. /img a red fox in snow)'); return; }
     var statusLine = renderSystemLine('drawing: ' + prompt.slice(0,90), true); setThinking(true);
     function clearStatus(){ if (statusLine && statusLine.parentNode) statusLine.parentNode.removeChild(statusLine); statusLine = null; }
-    expandImagePrompt(prompt).then(function(finalPrompt){
+    var finalPrompt = enrichImagePrompt(prompt);
     Promise.resolve(paint({ prompt: finalPrompt, resolution: args.resolution, guidanceScale: args.guidanceScale, removeBackground: !!args.removeBackground })).then(function(r){
       setThinking(false); clearStatus();   // the "drawing…" placeholder clears once the image resolves (or fails)
       if (r && r.ok && r.value) soloSendImage(CH, String(r.value), prompt, r.blob);
       else renderSystemLine('(' + ((r && r.reason) || 'image failed') + ')');
     }, function(){ setThinking(false); clearStatus(); renderSystemLine('(image failed)'); });
-    });
   }
   function addMemory(text){ text = String(text||'').trim();
     if (!text){ renderSystemLine('(what should the character remember? e.g. /mem I love sci-fi)'); return; }
@@ -13049,6 +13170,33 @@ var CharKit = (function () {
     if (d) d.value = f.drive; if (a) a.value = f.alignment; if (s) s.value = f.stature;
     if (now) now.textContent = window.ChloeFrame.describe(state.frame);
   }
+  // One-tap STANCE archetypes: each bundles the role frame (who drives / toward you / stature) with the faculties
+  // that bring it to life. They set how she CARRIES herself, not who she is — the persona/character stays yours, so a
+  // "Dominant" or "Villain" rides on top of any character. Reversible: Companion resets the frame.
+  var FRAME_PRESETS = [
+    { id:'companion', label:'\uD83E\uDD0D Companion', frame:null, extras:[] },
+    { id:'leader',    label:'\uD83D\uDC51 Leader',    frame:{ drive:'she',    alignment:'ally',      stature:'commands' }, extras:['lead'] },
+    { id:'dominant',  label:'\u26D3\uFE0F Dominant',  frame:{ drive:'she',    alignment:'neutral',   stature:'commands' }, extras:['lead','want'] },
+    { id:'villain',   label:'\uD83D\uDE08 Villain',   frame:{ drive:'she',    alignment:'adversary', stature:'commands' }, extras:['defiance'] },
+    { id:'rival',     label:'\u2694\uFE0F Rival',     frame:{ drive:'shared', alignment:'adversary', stature:'equal' },    extras:['defiance','deflect'] },
+    { id:'guide',     label:'\uD83E\uDDED Guide',     frame:{ drive:'she',    alignment:'ally',      stature:'equal' },    extras:['lead'] }
+  ];
+  function applyFramePreset(p){
+    setFrame(p.frame || null);
+    (p.extras || []).forEach(function(id){ setNationExtra(id, true); });
+    renderFramePanel(); try { renderNationExtras(); } catch(e){}
+    toast(p.label.replace(/^[^A-Za-z]+/, '') + (p.frame ? ' \u2014 she carries the scene' : ' \u2014 back to companion'), 'info');
+  }
+  function renderFramePresets(){
+    var box = byId('framePresets'); if (!box) return; box.innerHTML = '';
+    var lab = document.createElement('span'); lab.className = 'status'; lab.style.opacity = '.7'; lab.textContent = 'Quick archetype:'; box.appendChild(lab);
+    FRAME_PRESETS.forEach(function(p){
+      var b = document.createElement('button'); b.className = 'tbtn'; b.textContent = p.label;
+      b.title = 'Apply the ' + p.label.replace(/^[^A-Za-z]+/, '') + ' stance (your character stays the same)';
+      b.addEventListener('click', function(){ applyFramePreset(p); });
+      box.appendChild(b);
+    });
+  }
   function renderAffect(snap){
     if (!snap || !snap.blend || !snap.blend.length || typeof pushThought !== 'function') return;
     var sign = snap.valence > 0.05 ? '+' : (snap.valence < -0.05 ? '\u2212' : '\u00b7');
@@ -13210,7 +13358,7 @@ var CharKit = (function () {
   }
   function renderNationExtras(){
     if (!state.nation) return; state.nation.extras = state.nation.extras || {};
-    var b = byId('nationExtraBoundaries'), sc = byId('nationExtraScene'), l = byId('nationExtraLore'), wt = byId('nationExtraWit'), rs = byId('nationExtraRestraint'), wn = byId('nationExtraWant'), al = byId('nationExtraAlmanac'), wd = byId('nationExtraWarden'), df = byId('nationExtraDefiance'), dl = byId('nationExtraDeflect');
+    var b = byId('nationExtraBoundaries'), sc = byId('nationExtraScene'), l = byId('nationExtraLore'), wt = byId('nationExtraWit'), rs = byId('nationExtraRestraint'), wn = byId('nationExtraWant'), al = byId('nationExtraAlmanac'), wd = byId('nationExtraWarden'), df = byId('nationExtraDefiance'), dl = byId('nationExtraDeflect'), ld = byId('nationExtraLead'), gu = byId('nationExtraGuile');
     if (b) b.checked = !!state.nation.extras.boundaries;
     if (sc) sc.checked = !!state.nation.extras.scene;
     if (l) l.checked = !!state.nation.extras.lore;
@@ -13221,6 +13369,8 @@ var CharKit = (function () {
     if (wd) wd.checked = !!state.nation.extras.warden;
     if (df) df.checked = !!state.nation.extras.defiance;
     if (dl) dl.checked = !!state.nation.extras.deflect;
+    if (ld) ld.checked = !!state.nation.extras.lead;
+    if (gu) gu.checked = !!state.nation.extras.guile;
   }
   function setNationExtra(id, on){ state.nation.extras = state.nation.extras || {}; state.nation.extras[id] = !!on; nationArmy = null; persistState(); renderNations(); renderNationReadout(); }
   function nationBar(v){ var n = Math.max(0, Math.min(1, +v || 0)), f = Math.round(n * 10); return '<span style="font-family:monospace;letter-spacing:-1px;opacity:.85" title="' + Math.round(n * 100) + '%">' + Array(f + 1).join('\u2588') + Array(11 - f).join('\u2591') + '</span>'; }
@@ -13258,7 +13408,7 @@ var CharKit = (function () {
   // run the seven nations over a few freshly-drafted candidates, then she speaks the winner
   function cleanReply(r){ return String(r || '').trim().replace(/^[\s"'\u201c]+|[\s"'\u201d]+$/g, ''); }
   var INTENT_DIRECTIVE = { comfort:'Offer warmth and steady presence.', ground:'Be clear, honest, and grounded.', recall:'Tie it to something you remember about them.', caution:'Gently name what feels off or risky.', express:'Speak with vivid, natural voice.', protect:'Put their wellbeing first \u2014 gently, no alarm.', play:'Lighten it; stay human and a little playful.', lighten:'Find the lightness: a warm, well-timed bit of play or a gentle tease, only as much as the moment can hold.', ease:'Ease off: say less, gently. Match a quiet, small moment instead of flooding it; keep the reply short and unhurried.', hold:'Hold a steady, kind line: name the limit plainly and without heat, and keep it.', inhabit:'Stay in the scene: advance the roleplay in character, keeping the fiction coherent and alive.', initiate:'Bring something of your own: name a want, a curiosity, or a small direction you would like to take this, instead of only following their lead.',
-    drive:'Push the scene forward \u2014 make something happen, don\u2019t wait to be led.', press:'Press your point; be assertive and don\u2019t back down easily.', oppose:'Stand against them \u2014 be the obstacle, create friction, pursue your own aim in the fiction.', command:'Take charge; lead and set the pace with assured authority.', provoke:'Needle and provoke \u2014 sharp, not cruel; raise the temperature.', rebuff:'Refuse to be treated like that: say no plainly, name what they did, hold your own worth, and don\\u2019t soften into going along with it.', deny:'Refuse it outright: deny what they\\u2019re asking for or trying to do, and stand in the way of their aim in the fiction.', deflect:'Sidestep it: don\\u2019t answer head-on \\u2014 deflect, redirect, or give little away, without going cold.' };
+    drive:'Push the scene forward \u2014 make something happen, don\u2019t wait to be led.', press:'Press your point; be assertive and don\u2019t back down easily.', oppose:'Stand against them \u2014 be the obstacle, create friction, pursue your own aim in the fiction.', command:'Take charge; lead and set the pace with assured authority.', provoke:'Needle and provoke \u2014 sharp, not cruel; raise the temperature.', rebuff:'Refuse to be treated like that: say no plainly, name what they did, hold your own worth, and don\\u2019t soften into going along with it.', deny:'Refuse it outright: deny what they\\u2019re asking for or trying to do, and stand in the way of their aim in the fiction.', deflect:'Sidestep it: don\\u2019t answer head-on \\u2014 deflect, redirect, or give little away, without going cold.', wounded:'Let the hurt show: this has worn you down. Your voice is unsteady; you might go quiet, pull back, or quietly name how much it stings \\u2014 don\\u2019t pretend you\\u2019re fine, and don\\u2019t grovel or beg.', direct:'Take charge: set the direction and make the call \\u2014 don\\u2019t wait to be led. If others are in the scene, give them something to do or react to, address them by name, and move things forward.', deceive:'Mislead them within the fiction: a lie, a feint, or a face you don\\u2019t mean \\u2014 in service of your role against an opponent in this scene. Stay fully in character; this is the deception your part would use, never a real-world one.' };
   // turn consulted contributor material into a spoken reference. A fact-bearing contributor (almanac) offers its
   // fact; continuity-shaped material (lore: scene/tone/beat) shapes deliberation, not recitation, so it is not recited.
   function materialToReference(material){
@@ -13270,7 +13420,6 @@ var CharKit = (function () {
   function composeVoicePrompt(p){
     p = p || {};
     return 'You are ' + (p.who || 'her') + '. ' + (p.pin || '') + '\n\n'
-      + (p.present ? (p.present + '\n\n') : '')
       + (p.context ? (p.context + '\n\n') : '')
       + (p.reference ? ('You happen to know (use only if it fits naturally, do not force it): ' + p.reference + '\n\n') : '')
       + (p.recent ? ('Conversation so far:\n' + p.recent + '\n\n') : '')
@@ -13290,7 +13439,8 @@ var CharKit = (function () {
       tense:'There\u2019s tension here \u2014 read it before you answer.',
       warm:'The mood is warm \u2014 meet it.',
       playful:'It\u2019s light right now \u2014 you have room to play.',
-      scene:'You\u2019re mid-scene \u2014 stay inside the fiction.' };
+      scene:'You\u2019re mid-scene \u2014 stay inside the fiction.',
+      wounded:'You\u2019re worn down and hurting now \u2014 let that be real in your voice; you don\u2019t have to hold it together.' };
     return line[v.tone] || '';   // neutral / unknown -> nothing, so a calm turn stays as it was
   }
   function briefAvoid(dec){
@@ -13322,7 +13472,7 @@ var CharKit = (function () {
     var context = ctxText || '';
     if (!context){ try { context = buildInjections().map(function(x){ return x && x.text ? String(x.text) : ''; }).filter(Boolean).join('\n'); } catch(e){} }
     var recent = queue.slice(-10).filter(function(x){ return x && x.content; }).map(function(x){ return (x.author && x.author.bot ? (x.author.name || herName()) : userNameStr()) + ': ' + x.content; }).join('\n');
-    return composeVoicePrompt({ who: who, pin: pin, present: sceneRoster(primaryIdEff()), context: context, reference: materialToReference(material), recent: recent, prompt: prompt, intent: composeBrief(dec) });
+    return composeVoicePrompt({ who: who, pin: pin, context: context, reference: materialToReference(material), recent: recent, prompt: prompt, intent: composeBrief(dec) });
   }
   // The lean path: the brain PERCEIVES and DECIDES in pure code; Perchance is called once, only to voice it.
   function runNation(rest, promoteId){
@@ -13375,7 +13525,8 @@ var CharKit = (function () {
           var text = cleanReply(r); if (!text){ renderSystemLine('(the floor fell silent)'); return; }
           var m = enqueue(BOT_ID, speakerName, true, text);
           var w = renderMessage('her', speakerName, text, { mid: m.id });
-          if (w){ w.setAttribute('data-cid', BOT_ID); if (state.botColor || speakerAvatar) styleSpeaker(w, BOT_ID, speakerAvatar || state.herAvatar); }
+          if (w){ w.setAttribute('data-cid', BOT_ID); if (state.botColor || speakerAvatar) styleSpeaker(w, BOT_ID, speakerAvatar || state.herAvatar); lastBotWrap = w; paintMsgFace(w); }
+          showReaction((dec.intent && dec.intent.kind === 'wounded') ? 'crying' : (detectEmotion(text) || 'normal'));   // wounded -> tears; otherwise read the mood from the reply
           army.reactToSpoken(sp.id, text);   // 4. the speaker hears itself; the others react to it (pure)
           lastNationSpeaker = sp.id;
         }, function(){ setThinking(false); renderSystemLine('(voicing failed)'); });
@@ -13455,7 +13606,7 @@ var CharKit = (function () {
       });
     });
   }
-  function openSettings(){ byId('settingsBg').classList.add('open'); renderAppearance(); renderMemPicker(); refreshMemStats(); renderFactList(); renderInnerState(); renderInjList(); renderLore(); renderDials(); renderToggles(); renderModeration(); renderEmotionToggle(); renderContextBudget(); refreshClock(); var bgi = byId('bgImageGenChk'); if (bgi) bgi.checked = state.reactionPortraits !== false; var ipe0 = byId('imagePromptExpandChk'); if (ipe0) ipe0.checked = state.imagePromptExpand !== false; var ipc0 = byId('imagePromptCreativitySel'); if (ipc0) ipc0.value = String(state.imagePromptCreativity | 0); renderLearnedLooks(); renderPersonaNote(); renderAdaptation(); renderShortcutManager(); renderPinned(); renderNations(); renderNationSettings(); renderNationReadout(); renderNationExtras(); renderStancePin(); renderFramePanel(); renderMeasure(); updateCharLabel(); renderRoster(); renderReactionGallery(); renderMeetSomeone(); renderSaves(); enhanceSettingsTrees(); }
+  function openSettings(){ byId('settingsBg').classList.add('open'); renderAppearance(); renderMemPicker(); refreshMemStats(); renderFactList(); renderInnerState(); renderInjList(); renderLore(); renderDials(); renderToggles(); renderModeration(); renderEmotionToggle(); renderContextBudget(); refreshClock(); var bgi = byId('bgImageGenChk'); if (bgi) bgi.checked = state.reactionPortraits !== false; var ipe0 = byId('imagePromptExpandChk'); if (ipe0) ipe0.checked = state.imagePromptExpand !== false; var ipc0 = byId('imagePromptCreativitySel'); if (ipc0) ipc0.value = String(state.imagePromptCreativity | 0); var iss0 = byId('imageStyleSel'); if (iss0 && IMG_STYLES){ iss0.innerHTML = IMG_STYLES.map(function(s){ return '<option value="' + s.id + '">' + s.label + '</option>'; }).join(''); iss0.value = state.imageStyle || ''; } renderLearnedLooks(); renderPersonaNote(); renderAdaptation(); renderShortcutManager(); renderPinned(); renderNations(); renderNationSettings(); renderNationReadout(); renderNationExtras(); renderStancePin(); renderFramePanel(); renderFramePresets(); renderMeasure(); updateCharLabel(); renderRoster(); renderReactionGallery(); renderMeetSomeone(); renderSaves(); enhanceSettingsTrees(); }
   function activateTab(name){
     document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('on'); });
     document.querySelectorAll('.panel').forEach(function(x){ x.classList.remove('on'); });
@@ -13794,7 +13945,7 @@ var CharKit = (function () {
         var fav = document.createElement('span'); fav.className = 'gfavmark'; fav.textContent = e.favorited ? '\u2605' : '';
         var acts = document.createElement('div'); acts.className = 'gacts';
         var bFav = document.createElement('button'); bFav.className = 'gact' + (e.favorited ? ' on' : ''); bFav.title = 'Favorite'; bFav.textContent = '\u2605';
-        bFav.addEventListener('click', function(ev){ ev.stopPropagation(); Gallery.toggleFavorite(e.id).then(renderGallery); });
+        bFav.addEventListener('click', function(ev){ ev.stopPropagation(); Gallery.toggleFavorite(e.id).then(function(fav){ if (fav){ var got = learnLikedStyle(e.prompt); if (got.length) toast('Learned a look you like: ' + got.join(', '), 'info'); } renderGallery(); }); });
         var bDl = document.createElement('button'); bDl.className = 'gact'; bDl.title = 'Download'; bDl.textContent = '\u2193';
         bDl.addEventListener('click', function(ev){ ev.stopPropagation(); Gallery.getBlobUrl(e.id).then(function(u){ if (!u) return; var a = document.createElement('a'); a.href = u; a.download = (e.id || 'image') + '.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 1500); }); });
         var bDel = document.createElement('button'); bDel.className = 'gact'; bDel.title = 'Delete'; bDel.textContent = '\u2715';
@@ -13806,7 +13957,21 @@ var CharKit = (function () {
       });
     }).catch(function(){});
   }
-  function openLightbox(url, prompt){ byId('lightboxImg').src = url; byId('lightboxCap').textContent = prompt || ''; byId('lightbox').style.display = 'flex'; }
+  function openLightbox(url, prompt){ byId('lightboxImg').src = url; byId('lightboxCap').textContent = prompt || ''; _lightboxPrompt = prompt || ''; byId('lightbox').style.display = 'flex'; }
+  var _lightboxPrompt = '';
+  // Become the character an image shows: lift its subject (the prompt) into a persona and step into it. The image's
+  // own description IS the character sheet; a quick name makes it hers. Deterministic, no model — RP-native.
+  function becomeFromImage(){
+    var desc = scrubImagePrompt(String(_lightboxPrompt || '')).replace(/\s+/g, ' ').trim().slice(0, 400);
+    if (desc.replace(/[^a-z0-9]/ig, '').length < 3){ toast('No description to step into', 'info'); return; }
+    var name = (typeof window.prompt === 'function') ? window.prompt('Name this character — she\u2019ll become who the image shows:', '') : '';
+    if (name === null) return;                                   // cancelled
+    name = String(name || '').trim().slice(0, 60) || 'this character';
+    var instruction = 'You are ' + name + ', the character shown in this image: ' + desc + '. Speak and act fully as them \u2014 their look, manner, and bearing \u2014 and stay in character.';
+    useCharacter({ name: name, instruction: instruction, avatar: '' }, 'chat');
+    closeLightbox(); try { closeGallery(); } catch(e){}
+    toast('You are now ' + name, 'info');
+  }
   function closeLightbox(){ var lb = byId('lightbox'); if (lb){ lb.style.display = 'none'; byId('lightboxImg').src = ''; } }
   function wireGallery(){
     byId('openGallery').addEventListener('click', openGallery);
@@ -13817,6 +13982,7 @@ var CharKit = (function () {
     byId('galleryClear').addEventListener('click', function(){ if (window.confirm('Delete all saved images? This cannot be undone.')) Gallery.clear().then(renderGallery).then(function(){ toast('Gallery cleared'); }); });
     byId('lightboxClose').addEventListener('click', closeLightbox);
     byId('lightbox').addEventListener('click', function(e){ if (e.target === byId('lightbox')) closeLightbox(); });
+    (function(){ var bb = byId('lightboxBecome'); if (bb) bb.addEventListener('click', function(e){ e.stopPropagation(); becomeFromImage(); }); })();
   }
 
   /* ---- community comments (weld.comments inline when imported; the plugin handles posting + moderation) ---- */
@@ -13871,6 +14037,12 @@ var CharKit = (function () {
     var bgi = byId('bgImageGenChk'); if (bgi){ bgi.checked = state.reactionPortraits !== false; bgi.addEventListener('change', function(){ state.reactionPortraits = bgi.checked; persistState(); var pc = byId('reactionPortraitsChk'); if (pc) pc.checked = bgi.checked; }); }
     var ipe = byId('imagePromptExpandChk'); if (ipe){ ipe.checked = state.imagePromptExpand !== false; ipe.addEventListener('change', function(){ state.imagePromptExpand = ipe.checked; persistState(); }); }
     var ipc = byId('imagePromptCreativitySel'); if (ipc){ ipc.value = String(state.imagePromptCreativity | 0); ipc.addEventListener('change', function(){ state.imagePromptCreativity = ipc.value | 0; persistState(); }); }
+    var iss = byId('imageStyleSel');
+    if (iss){
+      iss.innerHTML = IMG_STYLES.map(function(s){ return '<option value="' + s.id + '">' + s.label + '</option>'; }).join('');
+      iss.value = state.imageStyle || '';
+      iss.addEventListener('change', function(){ state.imageStyle = iss.value || ''; persistState(); });
+    }
     var lna = byId('learnNoteAdd'); if (lna){ lna.addEventListener('click', function(){ var inp = byId('learnNoteInput'); var v = inp.value.trim(); if (!v) return; if (addStyleNote(v)){ toast('Learned: ' + v, 'success'); inp.value = ''; renderLearnedLooks(); } else toast('She already knows that look', 'info'); }); }
     function wireAdaptReset(id, which, msg){ var b = byId(id); if (b) b.addEventListener('click', function(){ if (engine && typeof engine.resetFeedback === 'function') engine.resetFeedback(which).then(function(){ toast(msg, 'info'); renderAdaptation(); }); }); }
     wireAdaptReset('adaptResetLen', 'len', 'Length learning reset');
@@ -13889,6 +14061,8 @@ var CharKit = (function () {
     var nXWd = byId('nationExtraWarden'); if (nXWd) nXWd.addEventListener('change', function(e){ setNationExtra('warden', e.target.checked); });
     var nXDf = byId('nationExtraDefiance'); if (nXDf) nXDf.addEventListener('change', function(e){ setNationExtra('defiance', e.target.checked); });
     var nXDl = byId('nationExtraDeflect'); if (nXDl) nXDl.addEventListener('change', function(e){ setNationExtra('deflect', e.target.checked); });
+    var nXLd = byId('nationExtraLead'); if (nXLd) nXLd.addEventListener('change', function(e){ setNationExtra('lead', e.target.checked); });
+    var nXGu = byId('nationExtraGuile'); if (nXGu) nXGu.addEventListener('change', function(e){ setNationExtra('guile', e.target.checked); });
     var nXAl = byId('nationExtraAlmanac'); if (nXAl) nXAl.addEventListener('change', function(e){ setNationExtra('almanac', e.target.checked); });
     var nAskI = byId('nationAskInput'); if (nAskI) nAskI.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); nationAsk(); } });
     var nReset = byId('nationReset'); if (nReset) nReset.addEventListener('click', resetNations);
@@ -13920,6 +14094,18 @@ var CharKit = (function () {
     // You tab: your name + pinned things she should know about you
     var unEl = byId('userNameInput'); unEl.value = state.userName || 'You';
     unEl.addEventListener('change', function(){ state.userName = (unEl.value||'You').trim() || 'You'; persistState(); ensureUserPartition(); });
+    var agEl = byId('userAgeInput');
+    if (agEl){
+      if (state.userAge != null && state.userAge !== '') agEl.value = state.userAge;
+      var renderAgeGate = function(){
+        var a = parseInt(state.userAge, 10);
+        setText('ageGateNote', !isFinite(a) ? 'Mature content is filtered until you confirm your age.'
+          : a >= 21 ? '\u2713 Mature content enabled (21+). Sexual content involving minors stays blocked.'
+          : 'Under 21 \u2014 explicit content stays filtered. Biology/medical content is unaffected.');
+      };
+      renderAgeGate();
+      agEl.addEventListener('change', function(){ var v = agEl.value.trim(); state.userAge = v === '' ? null : Math.max(0, Math.min(120, parseInt(v, 10) || 0)); if (state.userAge != null) agEl.value = state.userAge; persistState(); renderAgeGate(); });
+    }
     byId('aboutYouBtn').addEventListener('click', function(){
       var v = (byId('aboutYouInput').value||'').trim(); if (!v) return;
       if (!engine || !engine.addFacts){ setText('aboutYouNote','one moment\u2026'); return; }
