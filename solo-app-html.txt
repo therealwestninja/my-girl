@@ -652,7 +652,7 @@
       <div class="card">
         <h3>Reaction portraits</h3>
         <div class="note">VN-style emotion cutouts, painted in the background while you chat. She wears the one that fits her mood as she replies. Edit a look and regenerate to fix it; seasonal ones appear in their window.</div>
-        <label class="rxToggle"><input type="checkbox" id="reactionPortraitsChk" checked> Paint reaction portraits while idle</label>
+        <label class="rxToggle"><input type="checkbox" id="reactionPortraitsChk"> Paint reaction portraits while idle</label>
         <label class="rxToggle"><input type="checkbox" id="reactionFeedbackChk"> Provide feedback &mdash; your edits teach her looks &amp; preferences, applied to all future portraits</label>
         <div class="reactionGrid" id="reactionGrid"></div>
       </div>
@@ -814,7 +814,7 @@
         <div id="shortcutEditor" class="charEditor" style="display:none"></div>
         <div id="shortcutList" style="margin-top:10px"></div>
       </div>
-      <div class="note" style="margin:4px 0 8px">These are the parts of the character’s mind you can turn on and off. They all run locally in your browser, and changes take effect immediately.</div>
+      <div class="note" id="behaviorTogglesIntro" style="margin:4px 0 8px">Optional parts of her mind you can switch on. All local; changes apply immediately.</div>
       <div id="behaviorToggles"></div>
     </div>
 
@@ -10567,20 +10567,20 @@ var CharKit = (function () {
     idleConsolidation:true, reflection:true, goalObjects:true, relationshipTrust:true,
     ownAffect:true, moodAware:true, workingMemory:true, idleDeliberation:true, attentionManager:true, feltVoice:true,
     selfKnowledge:true, imageMemory:true,
-    // opt-in (off by default)
-    contradictionAware:false, userModeling:false, feedbackLearning:false, semanticRecall:false,
+    // now on by default too (user-curated). NOTE: semanticRecall on lazily loads a ~33MB embedder once.
+    contradictionAware:true, userModeling:true, feedbackLearning:true, semanticRecall:true,
     moderation:{ enabled:false, phrases:[], rating:'x' }, lorebook:[], showEmotion:true,
     cast:[], castMaxSpeakers:2, castMaxFollowups:2, castReplyMode:'primary', castChain:false, castChainMax:3,   // multi-character scene (extras beyond the primary)
     autoSave:true, autoSaveMins:10, autoSaveKeep:10,  // rolling auto-checkpoints (Save/Load popup)
     mindOpen:null,   // Thoughts drawer open/closed, remembered across refreshes (null = default by screen width)
     matchDeviceLang:true,   // first run: reply in the browser's language if it isn't English (overridable)
-    reactionPortraits:true,   // generate VN-style emotion cutouts during idle time (overridable)
-    reactionFeedback:false, imageStyleNotes:[],   // 'provide feedback' switch + the looks/preferences learned from edits
+    reactionPortraits:false,   // OFF by default: don't paint idle VN-style emotion cutouts unless asked
+    reactionFeedback:true, imageStyleNotes:[],   // ON by default: your portrait edits teach her looks/preferences
     imagePromptExpand:true, imagePromptCreativity:0,   // AI-enrich a terse request into a vivid prompt before drawing (0 faithful / 1 balanced / 2 creative); off = the terse deterministic prompt
     imageLikedStyles:[],   // aesthetic descriptors harvested from images you favorite — folded into future prompts ("voting improves generations")
     personality:{ kindness:0.5, sarcasm:0.5, curiosity:0.5, playfulness:0.5, formality:0.5, verbosity:0.5 },
-    nation:{ weights:{}, enabled:{}, persona:{}, timeoutMs:8000, useForReplies:false, noise:0.04 },   // the Seven Nations (Settings > Brain)
-    stanceActs:false,   // opt-in: let inferred stance steer behavior (currently the roleplay image yes-and). Default off.
+    nation:{ weights:{}, enabled:{}, extras:{ boundaries:true, scene:true, lore:true, wit:true, want:true, expressive:true, almanac:true }, persona:{}, timeoutMs:8000, useForReplies:true, noise:0.04 },   // the Seven Nations + opt-in faculties now on by default; council chooses replies
+    stanceActs:true,   // ON by default: let inferred stance steer behavior (the roleplay image yes-and).
     affect:null,   // persisted affect vector (warm/bright/calm/sad/hurt/angry/afraid/longing) — observed + shown only; colors nothing yet
     topics:null,   // persisted topic+interest field — observed + shown only; foundation for ideas + her-own-goals (later)
     stance:null };   // persisted stance vector (companion/roleplay/author/assist) — observed + shown only; nothing acts on it unless stanceActs is on
@@ -13740,6 +13740,7 @@ var CharKit = (function () {
       });
       box.appendChild(card);
     });
+    var intro = byId('behaviorTogglesIntro'); if (intro) intro.style.display = box.children.length ? '' : 'none';   // no opt-in toggles left → hide the intro too
   }
 
   // ---- collapsible settings tree ----------------------------------------------------------------
