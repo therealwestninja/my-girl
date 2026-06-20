@@ -751,6 +751,8 @@
       <div class="card">
         <h3>Rook brain layer</h3>
         <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="rookLayerChk"><div><div class="tl">Governance &amp; meta-cognition (Rook layer)</div><div class="td">on by default. Adds a top layer above the council: self-governance (a constitution + Parliament), foresight, a long-view purpose, intrinsic drives, impulse restraint, and learning from your good/bad feedback. She gets one integrated &ldquo;inner read&rdquo; before each reply. All local, no extra AI calls. Drive it with <code>/rook</code> (try <code>/rook parliament</code>, <code>/rook foresee &lt;x&gt;</code>, <code>/rook drives</code>).</div></div></div>
+      </div>
+      <div class="card">
         <h3>How the council decides</h3>
         <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="nationReplyChk"><div><div class="tl">Let the council choose her replies</div><div class="td">each reply drafts a few candidates and the council votes on them, instead of the single engine reply. Off by default.</div></div></div>
         <div class="field" style="margin-top:12px"><label>Deliberation timeout</label><div class="desc">How long a faculty may take before it’s timed out to a default vote (ms).</div><input type="number" id="nationTimeout" min="500" step="500"></div>
