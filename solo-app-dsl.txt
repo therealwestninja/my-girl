@@ -16,7 +16,7 @@ weldcomments = {import:weld-comments-plugin}
 // inert until you enable it with "/rook on" (or "!chloe rook on"). Once on, it adds
 // one integrated "inner read" line to her replies and learns from your good/bad
 // feedback. Commands: /rook parliament | propose <x> | assent | foresee <x> |
-// purpose [set <t>] | drives | restraint | learning | dream | signals | off.
+// purpose [set <t>] | drives | restraint | learning | dream | signals | needs | sentinel | bond | know | salience | off.
 // It has its own localStorage (key "rooklobes:v1"); it cannot affect the base app
 // while off, and makes no extra AI calls.
 //
