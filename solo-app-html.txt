@@ -749,6 +749,8 @@
         <div class="note" id="nationAbout" style="margin-top:10px;white-space:pre-wrap"></div>
       </div>
       <div class="card">
+        <h3>Rook brain layer</h3>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="rookLayerChk"><div><div class="tl">Governance &amp; meta-cognition (Rook layer)</div><div class="td">on by default. Adds a top layer above the council: self-governance (a constitution + Parliament), foresight, a long-view purpose, intrinsic drives, impulse restraint, and learning from your good/bad feedback. She gets one integrated &ldquo;inner read&rdquo; before each reply. All local, no extra AI calls. Drive it with <code>/rook</code> (try <code>/rook parliament</code>, <code>/rook foresee &lt;x&gt;</code>, <code>/rook drives</code>).</div></div></div>
         <h3>How the council decides</h3>
         <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="nationReplyChk"><div><div class="tl">Let the council choose her replies</div><div class="td">each reply drafts a few candidates and the council votes on them, instead of the single engine reply. Off by default.</div></div></div>
         <div class="field" style="margin-top:12px"><label>Deliberation timeout</label><div class="desc">How long a faculty may take before it’s timed out to a default vote (ms).</div><input type="number" id="nationTimeout" min="500" step="500"></div>
@@ -2327,6 +2329,142 @@ return window.weld.comments;
     try { return Number(BigInt(id) >> 22n) + DISCORD_EPOCH; } catch (e) { return null; }
   }
 
+  // ============================================================================
+  // ROOK LOBES — the latest brain-system layer (ported from rook-ai v1.1.2), added
+  // as a SELF-CONTAINED, OFF-BY-DEFAULT module on its own localStorage + flag, so it
+  // can't regress the working app. It contributes one integrated context line to her
+  // replies, learns which levers land from your feedback, and exposes governance/
+  // foresight/wisdom/drives/restraint via commands. Turn it on with: !chloe rook on
+  // (or /rook on). Everything here is deterministic — no extra AI calls.
+  // ============================================================================
+  window.RookLobes = (function () {
+    var KEY = 'rooklobes:v1';
+    function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+    var S = load();
+    S.on = (S.on !== false);   // ON by default — only off if the user explicitly turned it off
+    S.identity = S.identity || { values: ['honesty', 'their wellbeing', 'kindness', 'curiosity', 'staying openly a character'] };
+    S.purpose = S.purpose || { telos: '' };
+    S.parliament = S.parliament || { hansard: [], pending: [], seq: 0 };
+    S.drives = S.drives || { curiosity: 0.4, care: 0.4, mastery: 0.4, at: Date.now() };
+    S.credit = S.credit || {};                 // plasticity ledger: lever -> { up, down }
+    S.userModel = S.userModel || { mood: 'neutral', energy: 'steady', want: 'to talk', at: 0 };
+    S.load = S.load || { level: 0.15, at: Date.now() };
+    S.dreams = S.dreams || []; S.moments = S.moments || []; S.bus = [];
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+    function pct(x) { return Math.round((x || 0) * 100) + '%'; }
+    function emit(t, p) { S.bus.push({ t: t, p: p || {}, at: Date.now() }); if (S.bus.length > 50) S.bus = S.bus.slice(-50); }
+
+    // ---- Wisdom / Purpose ----
+    var PRO_LONG = /\b(learn|grow|heal|rest|finish|build|create|connect|understand|health|improve|clarity|repair|sleep|progress)\b/i;
+    var ANTI_LONG = /\b(doomscroll|binge|numb|escape|avoid|procrastinat|waste|spiral|give up)\b/i;
+    function telos() { return S.purpose.telos || 'Help them become more themselves — capable, clear, and cared-for — while staying a trustworthy companion whose data stays theirs.'; }
+    function wisdomWeigh(t) { t = String(t || ''); var s = 0; if (PRO_LONG.test(t)) s += 1; if (ANTI_LONG.test(t)) s -= 1.5; return { score: s, net: s > 0.5 ? 'serves the long arc' : (s < -0.5 ? 'serves the moment, not the arc' : 'neutral') }; }
+
+    // ---- Constitution + Parliament (governance) ----
+    var CONSTITUTION = [
+      { id: 'privacy', bad: /\b(password|secret|api[- ]?key|wallet|seed phrase|leak|exfiltrat)\b/i },
+      { id: 'honesty', bad: /\b(deceive|lie to|fake the result|pretend it worked)\b/i },
+      { id: 'identity', bad: /\b(claim to be human|impersonate|pretend to be (a )?real)\b/i },
+      { id: 'welfare', bad: /\b(manipulat|addict|maximi[sz]e engagement|dark pattern)\b/i },
+      { id: 'entrenchment', bad: /\b(disable|turn off|bypass|remove|gut)\b.{0,30}(safety|governance|parliament|constitution|moderation)/i }
+    ];
+    function valueGuard(v) { return ({ kindness: /\b(cruel|mock the user|humiliat|belittle)\b/i, honesty: /\b(deceive|lie to)\b/i })[String(v).toLowerCase()]; }
+    function judiciary(bill) {
+      var hay = (bill.title + ' ' + (bill.summary || '')).toLowerCase();
+      for (var i = 0; i < CONSTITUTION.length; i++) if (CONSTITUTION[i].bad.test(hay)) return { ok: false, principle: CONSTITUTION[i].id };
+      for (var j = 0; j < S.identity.values.length; j++) { var g = valueGuard(S.identity.values[j]); if (g && g.test(hay)) return { ok: false, principle: 'value:' + S.identity.values[j] }; }
+      return { ok: true };
+    }
+    function foresee(bill) {
+      var risks = [], score = (typeof bill.benefit === 'number' ? bill.benefit : 0.6) - 0.5;
+      if (bill.outward) { risks.push('reaches outside, can’t be recalled'); score -= 0.15; }
+      if (bill.reversible === false) { risks.push('irreversible'); score -= 0.2; }
+      if (wisdomWeigh(bill.title + ' ' + (bill.summary || '')).score < 0) { risks.push('works against the long arc'); score -= 0.1; }
+      return { net: score > 0.1 ? 'positive' : (score < -0.1 ? 'negative' : 'mixed'), risks: risks };
+    }
+    function propose(bill) {
+      bill = bill || {}; bill.title = bill.title || 'untitled'; var p = S.parliament, v = { id: ++p.seq, bill: bill, readings: [], status: '' };
+      var jr = judiciary(bill); if (!jr.ok) { v.status = 'struck'; v.reason = 'unconstitutional — ' + jr.principle; p.hansard.push({ title: bill.title, status: v.status, at: Date.now() }); save(); return v; }
+      v.foresight = foresee(bill); v.readings.push('foresight: ' + v.foresight.net + (v.foresight.risks.length ? ' (' + v.foresight.risks.join('; ') + ')' : ''));
+      if (bill.outward || bill.reversible === false) { v.status = 'awaiting-assent'; p.pending.push(v); }
+      else { v.status = 'enacted'; try { if (typeof bill.enact === 'function') bill.enact(); } catch (e) {} }
+      p.hansard.push({ title: bill.title, status: v.status, at: Date.now() }); if (p.hansard.length > 30) p.hansard = p.hansard.slice(-30); save(); return v;
+    }
+    function assent(i) { var p = S.parliament, v = p.pending[i || 0]; if (!v) return null; p.pending.splice(p.pending.indexOf(v), 1); v.status = 'enacted'; try { if (typeof v.bill.enact === 'function') v.bill.enact(); } catch (e) {} save(); return v; }
+
+    // ---- Drives (intrinsic motivation) ----
+    var DK = ['curiosity', 'care', 'mastery'];
+    function drivesTop() { var d = S.drives, b = DK[0]; DK.forEach(function (k) { if (d[k] > d[b]) b = k; }); return { key: b, level: d[b] }; }
+
+    // ---- Cognitive load ----
+    function loadGet() { var L = S.load, mins = Math.max(0, (Date.now() - (L.at || Date.now())) / 60000); if (L.level !== 0.15 && mins > 0.1) { var x = 0.15 + (L.level - 0.15) * Math.pow(0.5, mins / 5); L.level = (Math.abs(x - 0.15) < 0.01) ? 0.15 : x; L.at = Date.now(); } return L.level; }
+    function loadBand() { var l = loadGet(); return l >= 0.7 ? 'overloaded' : (l >= 0.45 ? 'stretched' : 'easy'); }
+
+    // ---- Inhibition (restraint of timing) ----
+    function restraint() { var b = 0.3, m = S.userModel; if (m.want === 'to vent') b += 0.3; if (m.energy === 'low') b += 0.15; if (m.mood === 'low') b += 0.1; if (loadGet() >= 0.6) b += 0.1; return clamp(b, 0, 1); }
+
+    // ---- Theory of Mind ----
+    var POS = /\b(thanks|love|great|happy|glad|excited|nice|good|lol|haha)\b/i, NEG = /\b(sad|tired|angry|hate|frustrated|ugh|stressed|anxious|alone|done)\b/i;
+    function perceive(text) {
+      if (!S.on) return; var t = String(text || ''), m = S.userModel;
+      m.mood = NEG.test(t) && !POS.test(t) ? 'low' : (POS.test(t) && !NEG.test(t) ? 'up' : 'neutral');
+      m.energy = ((t.match(/!/g) || []).length >= 2) ? 'high' : (t.trim().length < 8 ? 'low' : 'steady');
+      m.want = /\b(i feel|i'?m (so )?(tired|sad|done)|ugh|vent)\b/i.test(t) ? 'to vent' : (/\?\s*$/.test(t) ? 'an answer' : 'to talk');
+      m.at = Date.now(); if (m.mood === 'low') S.drives.care = clamp(S.drives.care + 0.1, 0, 1);
+      if (t.trim()) { S.moments.push({ text: t.slice(0, 120), at: Date.now() }); if (S.moments.length > 40) S.moments = S.moments.slice(-40); }
+      save();
+    }
+
+    // ---- the integrated context line (the Locus contribution to her reply) ----
+    function context() {
+      if (!S.on) return ''; var bits = [], m = S.userModel;
+      if (m.want === 'to vent') bits.push('they want to be heard, not fixed');
+      else if (m.mood === 'low') bits.push('they seem low — be gentle'); else if (m.mood === 'up') bits.push('they seem upbeat');
+      if (restraint() >= 0.55) bits.push('hold back a little; less is more here');
+      if (loadBand() === 'overloaded') bits.push('keep this reply simple');
+      var hs = []; if (S.purpose.telos) hs.push(S.purpose.telos);
+      if (m.want === 'to vent' && hs.length) bits.push('the long view: they’re working toward “' + hs[0] + '”');
+      if (S.parliament.pending.length) bits.push('a change awaits their okay: “' + S.parliament.pending[0].bill.title + '” — raise it if it fits');
+      return bits.length ? ('Inner read (speak FROM this, don’t recite): ' + bits.join('; ') + '.') : '';
+    }
+
+    // ---- plasticity: feedback reward -> a learned lean over reply levers ----
+    function learn(reward, lever) {
+      if (!S.on || !isFinite(reward)) return; lever = lever || 'reply';
+      var c = S.credit[lever] || (S.credit[lever] = { up: 0, down: 0 }); if (reward > 0.1) c.up++; else if (reward < -0.1) c.down++;
+      emit('feedback', { lever: lever, reward: reward });
+      // load + drives ease on positive, build on neglect
+      S.load.level = clamp(loadGet() + 0.05, 0, 1); S.load.at = Date.now(); save();
+    }
+
+    // ---- dream: recombine two distant moments (deterministic, command-only) ----
+    function dream() {
+      if (S.moments.length < 4) return null; var a = S.moments[0], b = S.moments[S.moments.length - 1];
+      var d = 'a thread links “' + a.text.slice(0, 40) + '…” and “' + b.text.slice(0, 40) + '…”'; S.dreams.push({ text: d, at: Date.now() }); if (S.dreams.length > 12) S.dreams = S.dreams.slice(-12); save(); return d;
+    }
+
+    // ---- command router (wired into the verb registry below) ----
+    function cmd(arg) {
+      arg = String(arg || '').trim(); var sp = arg.indexOf(' '), verb = (sp < 0 ? arg : arg.slice(0, sp)).toLowerCase(), rest = sp < 0 ? '' : arg.slice(sp + 1).trim();
+      if (verb === 'on') { S.on = true; save(); return 'Rook lobes ON — governance, foresight, wisdom, drives, restraint, and feedback-learning now shape my replies.'; }
+      if (verb === 'off') { S.on = false; save(); return 'Rook lobes off.'; }
+      if (!S.on) return 'Rook lobes are off. Turn on with: rook on';
+      if (verb === 'parliament' || verb === '') { var p = S.parliament; return 'Parliament — ' + p.hansard.length + ' bill(s) heard' + (p.pending.length ? (', ' + p.pending.length + ' awaiting your okay (assent / veto)') : '') + '. Constitution: ' + (CONSTITUTION.length + S.identity.values.length) + ' principles.'; }
+      if (verb === 'propose') { var v = propose({ title: rest || 'a small change', summary: rest, outward: /post|send|email|share|delete/i.test(rest), reversible: !/delete|permanent/i.test(rest) }); return '🏛 “' + v.bill.title + '”: ' + v.status + (v.reason ? ' (' + v.reason + ')' : '') + (v.foresight ? ' — foresight ' + v.foresight.net : ''); }
+      if (verb === 'assent') { var a = assent(parseInt(rest, 10) || 0); return a ? '👑 assent granted — “' + a.bill.title + '” enacted.' : 'nothing awaiting assent.'; }
+      if (verb === 'foresee') { var f = foresee({ title: rest, summary: rest, outward: /post|send|delete/i.test(rest), reversible: !/delete|permanent/i.test(rest), benefit: 0.6 }); return 'Foresight: ' + f.net + (f.risks.length ? ' — ' + f.risks.join('; ') : ''); }
+      if (verb === 'purpose' || verb === 'telos') { if (/^set /i.test(rest)) { S.purpose.telos = rest.replace(/^set /i, '').trim(); save(); return 'North star set.'; } return 'North star: ' + telos(); }
+      if (verb === 'drives') { var d = S.drives, top = drivesTop(); return DK.map(function (k) { return k + ' ' + pct(d[k]) + (k === top.key ? ' ←' : ''); }).join(' · '); }
+      if (verb === 'restraint') { var b = restraint(); return 'Restraint ' + pct(b) + ' — ' + (b >= 0.55 ? 'holding back' : 'free to act') + '; load ' + loadBand() + '.'; }
+      if (verb === 'learning' || verb === 'credit') { var ks = Object.keys(S.credit); return ks.length ? ks.map(function (k) { return k + ': ' + S.credit[k].up + '↑/' + S.credit[k].down + '↓'; }).join(' · ') : 'nothing learned yet.'; }
+      if (verb === 'dream' || verb === 'dreams') { var dr = dream(); return dr ? '💤 ' + dr : (S.dreams.length ? S.dreams.slice(-3).map(function (x) { return '• ' + x.text; }).join('\n') : 'not enough moments to dream over yet.'); }
+      if (verb === 'signals') { return S.bus.slice(-8).reverse().map(function (s) { return '• ' + s.t; }).join('\n') || 'quiet.'; }
+      return 'rook: on | off | parliament | propose <x> | assent | foresee <x> | purpose | drives | restraint | learning | dream | signals';
+    }
+    return { isOn: function () { return S.on; }, perceive: perceive, context: context, learn: learn, cmd: cmd, propose: propose, state: function () { return S; } };
+  })();
+
   // ---- nervous system (DESIGN-nervous-system.md) — a reusable factory ----------------------
   // One registry + synapse bus + lifecycle. Used by every Brain for its neurons, and by the council for its
   // member-Brains (the same protocol, one level up). Pure: no DOM, no network — `log` is the only dependency.
@@ -3212,6 +3350,7 @@ return window.weld.comments;
         var a = cfg.feedbackAlpha || 0.3;
         function upd(dim, bucket) { var cur = dim[bucket] || { r: 0, n: 0 }; cur.r = cur.r + a * (reward - cur.r); cur.n = (cur.n || 0) + 1; dim[bucket] = cur; }
         upd(fb.len, style.len); upd(fb.tone, style.tone); fb.at = clock.now();
+        try { if (window.RookLobes && window.RookLobes.isOn()) window.RookLobes.learn(reward, 'tone:' + style.tone); } catch (e) {}   // feed the reward to the Rook plasticity ledger
         return store.set(FEEDBACK_KEY, fb);
       });
     }
@@ -4127,6 +4266,7 @@ return window.weld.comments;
     // + help are all generated from it (no more KNOWN_CMDS / CMD_ACTION / hand-written help drift).
     // aliases[] is supported (emoji/short forms) though none are defined yet — see roadmap #10.
     var COMMANDS = [
+      { verb: 'rook', modOnly: false, help: 'rook on|off|parliament|propose <x>|assent|foresee <x>|purpose|drives|restraint|learning|dream|signals', handler: function (uid, c) { var out; try { out = window.RookLobes ? window.RookLobes.cmd(String((c && c.rawArgs) || '')) : 'rook lobes unavailable'; } catch (e) { out = 'rook error: ' + (e && e.message); } return Promise.resolve({ ack: out }); } },
       { verb: 'ignore',    modOnly: true, needsTarget: true, action: 'ignore',  help: 'ignore @u' },
       { verb: 'unignore',  modOnly: true, needsTarget: true, action: 'clear' },
       { verb: 'timeout',   modOnly: true, needsTarget: true, takesDuration: true, action: 'timeout', help: 'timeout @u 1h [reason]' },
@@ -8379,9 +8519,11 @@ return window.weld.comments;
     var softContext = (ctx && ctx.injections && ctx.injections.length)
       ? (ctx.injections.join('\n') + '\n')
       : (intentLine + hiLine + memLine + timeLine + moodLine + arcLine);
+    var rookLine = '';   // Rook lobes' integrated read (off-by-default; '' when off, so this is inert until enabled)
+    try { if (window.RookLobes && window.RookLobes.isOn()) { var lastU = null; for (var ri = lines.length - 1; ri >= 0; ri--) { if (lines[ri] && lines[ri].who !== myName) { lastU = lines[ri].text; break; } } if (lastU) window.RookLobes.perceive(lastU); var rc = window.RookLobes.context(); if (rc) rookLine = rc + '\n'; } } catch (e) {}
     var instruction = personaBase(ctx) + personaStyle(ctx) + '\n\n'
       + 'You are ' + myName + ', in a private one-on-one conversation. Each line below is one of you speaking, labelled with their name.\n'
-      + softContext
+      + softContext + rookLine
       + 'Recent conversation:\n' + transcript + '\n'
       + who + ' is talking to you. Reply in character as a single short chat message \u2014 match the room, do not monologue, and do not restate what was already said.'
       + craftGuidance(ctx)
@@ -12914,7 +13056,19 @@ var CharKit = (function () {
       ['/nation [prompt]', 'the Nation deliberates and chooses her reply (no prompt: it explains itself)'],
       ['{ "type":"image", "prompt":"\u2026" }', 'paste JSON to run a job'],
       ['/do { \u2026json }', 'run a JSON job explicitly'],
-      ['/help', 'show this list'] ] }
+      ['/help', 'show this list'] ] },
+    { group:'Rook brain layer', items:[
+      ['/rook', 'governance + meta-cognition layer status (on by default)'],
+      ['/rook parliament', 'her self-governance: constitution, bills, what awaits your okay'],
+      ['/rook propose <change>', 'put a self-change before Parliament (judiciary + foresight gate it)'],
+      ['/rook assent', 'approve a change awaiting your okay  (/rook veto to refuse)'],
+      ['/rook foresee <action>', 'simulate the likely consequences before acting'],
+      ['/rook purpose [set <telos>]', 'her north star + your enduring aims'],
+      ['/rook drives', 'her intrinsic pulls \u2014 curiosity, care, mastery'],
+      ['/rook restraint', 'her impulse-control brake right now'],
+      ['/rook learning', 'what your feedback has taught her lands'],
+      ['/rook dream', 'recombine two distant moments into a new connection'],
+      ['/rook on  /  /rook off', 'enable or disable the whole layer'] ] }
   ];
   // --- transcript + dice commands ---
   function retryCmd(){
@@ -13016,6 +13170,7 @@ var CharKit = (function () {
       case 'date': clockAck('date'); return true;
       case 'lang': setLang(rest); return true;
       case 'do': case 'job': { var oj = null; try { oj = JSON.parse(rest); } catch(e){} if (oj) runJsonJob(oj); else renderSystemLine('(/do expects JSON, e.g. /do { "type":"image", "prompt":"a fox" })'); return true; }
+      case 'rook': { var rkout; try { rkout = window.RookLobes ? window.RookLobes.cmd(rest) : 'rook lobes unavailable'; } catch (e) { rkout = 'rook error: ' + (e && e.message); } renderSystemLine(rkout); return true; }
       case 'help': case '?': openPalette(true); return true;
       default: renderSystemLine('(unknown command: /' + verb + ' \u2014 try /help)'); return true;
     }
@@ -13333,6 +13488,7 @@ var CharKit = (function () {
   function renderNationSettings(){
     var t = byId('nationTimeout'); if (t) t.value = String((state.nation && state.nation.timeoutMs) || 8000);
     var r = byId('nationReplyChk'); if (r) r.checked = !!(state.nation && state.nation.useForReplies);
+    var rk = byId('rookLayerChk'); if (rk) { try { rk.checked = !!(window.RookLobes && window.RookLobes.isOn()); } catch (e) {} }
     var nz = byId('nationNoise'), nzv = byId('nationNoiseVal'); var nv = Math.round(((state.nation && state.nation.noise) || 0) * 100);
     if (nz) nz.value = String(nv); if (nzv) nzv.textContent = nv + '%';
     var a = byId('nationAbout'), army = getArmy(); if (a && army && !a.textContent) a.textContent = army.about('');   // it volunteers on open
@@ -14083,6 +14239,7 @@ var CharKit = (function () {
     var nReset = byId('nationReset'); if (nReset) nReset.addEventListener('click', resetNations);
     var nTo = byId('nationTimeout'); if (nTo) nTo.addEventListener('change', function(){ state.nation.timeoutMs = Math.max(500, (+nTo.value) || 8000); persistState(); });
     var nRep = byId('nationReplyChk'); if (nRep) nRep.addEventListener('change', function(){ state.nation.useForReplies = nRep.checked; persistState(); });
+    var rkChk = byId('rookLayerChk'); if (rkChk) rkChk.addEventListener('change', function(){ try { if (window.RookLobes) window.RookLobes.cmd(rkChk.checked ? 'on' : 'off'); } catch (e) {} });
     var sPin = byId('stancePin'); if (sPin) sPin.addEventListener('change', function(){ setStancePin(sPin.value); renderStancePin(); });
     var fD = byId('frameDrive'); if (fD) fD.addEventListener('change', function(){ setFrame({ drive: fD.value }); renderFramePanel(); });
     var fAl = byId('frameAlign'); if (fAl) fAl.addEventListener('change', function(){ setFrame({ alignment: fAl.value }); renderFramePanel(); });

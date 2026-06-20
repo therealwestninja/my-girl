@@ -1,6 +1,6 @@
 $meta
   title = My Girl - Chloe
-  description =  Your AI companion. Learns what you like, matches your energy and mood. Customizable, free. Full cognitive engine: memory, reflection, episodic & semantic recall, and feedback learning
+  description =  Your AI companion. Learns what you like, matches your energy and mood. Customizable, free. Full cognitive engine: memory, reflection, episodic & semantic recall, feedback learning — plus the optional Rook brain layer (governance, foresight, wisdom, drives, restraint; turn on with /rook on)
   tags = ai, character, image, generator, imgen, gen, generation, advanced, chat, perchance, weld, plugin, free, fast, girl, live, smart, learning, best, 2026
   image = https://user.uploads.dev/file/02e1cc58ac93f83b5a3e87967c0a6871.jpg
 
@@ -10,6 +10,15 @@ weldcomments = {import:weld-comments-plugin}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // My Girl - Chloe — Perchance generator top-panel
+//
+// ROOK BRAIN LAYER (ported from rook-ai v1.1.2): a self-contained, OFF-BY-DEFAULT
+// governance + meta-cognition layer lives in the HTML panel (window.RookLobes). It's
+// inert until you enable it with "/rook on" (or "!chloe rook on"). Once on, it adds
+// one integrated "inner read" line to her replies and learns from your good/bad
+// feedback. Commands: /rook parliament | propose <x> | assent | foresee <x> |
+// purpose [set <t>] | drives | restraint | learning | dream | signals | off.
+// It has its own localStorage (key "rooklobes:v1"); it cannot affect the base app
+// while off, and makes no extra AI calls.
 //
 // IMAGE GENERATION needs NO extra relay. The app installs its own painter (installPainter) that
 // awaits textToImagePlugin in the HTML panel — the same scope where ai-text's broker attaches — and
