@@ -721,26 +721,26 @@
       </div>
       <div class="card">
         <h3>The Nation</h3>
-        <div class="note">Her top layer of mind: a population of small faculties, each a little society that weighs in on what she should say. Each turn the ones that fit are seated on the council. They vote; the votes are tallied by the weights below; the winner is spoken. An odd number is always seated, so a vote can't tie — heavier faculties pull her replies their way.</div>
+        <div class="note">A population of faculties that vote on what she says. Each turn the fitting ones are seated (always an odd number, so no ties); the winner — weighted by the sliders below — is spoken.</div>
         <div class="nationList" id="nationList"></div>
         <div class="row" style="margin-top:10px"><button class="btn" id="nationReset">Reset weights</button></div>
       </div>
       <div class="card">
         <h3>Optional faculties <span style="font-weight:normal;opacity:.7">— beyond the seven</span></h3>
-        <div class="note">Opt-in faculties that route in only when they fit. Off by default; turning one on adds it to the council and the live read above.</div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:6px"><input type="checkbox" id="nationExtraBoundaries"><div><div class="tl">boundaries</div><div class="td">holds a steady, kind line when you push or test it — routes in under tension or a sour turn, benched when things are calm. It proposes; it doesn't veto.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraScene"><div><div class="tl">scene</div><div class="td">holds and advances roleplay — wakes as the narrative rises (your *actions*), and yields to the protective core the moment you read as hurt.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraLore"><div><div class="tl">lore <span style="opacity:.6">(contributor)</span></div><div class="td">recalls what's been established — pulls real continuity from her memory and lorebook when a scene beat is in play, or when scene calls it in. Supplies material; never votes.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraWit"><div><div class="tl">wit</div><div class="td">finds the lightness — times a tease or a warm bit of play, but only when the room can hold it. It erases itself the moment things turn tender or tense, and the guards can block it as a backstop.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraRestraint"><div><div class="tl">restraint</div><div class="td">a brake — holds her back from coming on too strong when you've gone quiet. Present on any non-warm turn, it eases off rather than flooding a small moment, and can veto force where the other guards stay silent.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraWant"><div><div class="tl">want</div><div class="td">her own initiative — the one faculty that doesn't just react. On an opening (a question, a warm turn) it brings a want, a curiosity, a direction; it stands down on a flat or hurting turn, and under a driving scene it steps up to lead. The guards can block it as a backstop.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraWarden"><div><div class="tl">warden</div><div class="td">her self-respect — the one guard that protects <i>her</i>, not you. If you turn on her as a person (hostility, insults, demeaning demands) she refuses plainly and won't answer it eager or playful. Stands down inside a scene (in-character heat is consensual) and on a warm turn. Off by default.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraDefiance"><div><div class="tl">defiance</div><div class="td">the RP adversary — a discrete antagonist that refuses what you want and stands in the way of your aim. Seats only inside a <i>contested</i> scene (tension within the fiction), stands down when it's warm or anyone's vulnerable, and pairs with an adversary/commands frame. Off by default.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraDeflect"><div><div class="tl">deflect</div><div class="td">evasion — the lightest refusal. Sidesteps, gives little away, redirects when you press on a guarded, tense moment. Stands down when it's warm or someone's hurting (it won't stonewall a vulnerable person). Off by default.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraLead"><div><div class="tl">lead</div><div class="td">initiative with authority — where <i>want</i> brings a small want, lead <b>takes charge</b>: sets the direction, makes the call, and (with others in the scene) gives them a part to play and addresses them by name. Seats when there's room to drive, stands down over anyone vulnerable, and sharpens into command under a commanding stature. Off by default.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraGuile"><div><div class="tl">guile</div><div class="td">in-fiction cunning — a villain's tool. She can <b>lie or feint within the story</b> to serve her role. Triple-gated: it only deceives when you've cast her as an <i>adversary</i> (the role frame), only inside a contested scene, and never when it's warm or anyone's vulnerable. Pure roleplay deception, in character. Off by default.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraExpressive"><div><div class="tl">expressive</div><div class="td">her own feelings — instead of only mirroring yours, she <b>reacts as herself</b>: delight when something lifts her, a quiet note of disappointment when it falls short, awe when struck, a jolt when caught off guard. Seats when the moment carries real feeling. Off by default.</div></div></div>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraAlmanac"><div><div class="tl">almanac <span style="opacity:.6">(contributor)</span></div><div class="td">a small built-in book of facts across subjects (astronomy, geography, biology, history…). When the talk turns to something it knows it supplies a fitting fact for her to draw on; it stays quiet over a hurting moment, and never votes.</div></div></div>
+        <div class="note">Opt-in faculties that seat only when they fit. Turn one on to add it to the council and the live read above.</div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:6px"><input type="checkbox" id="nationExtraBoundaries"><div><div class="tl">boundaries</div><div class="td">holds a steady, kind line when you push or test her. Seats under tension; proposes, never vetoes.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraScene"><div><div class="tl">scene</div><div class="td">holds and advances roleplay; wakes as the story rises, yields the moment you seem hurt.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraLore"><div><div class="tl">lore <span style="opacity:.6">(contributor)</span></div><div class="td">pulls continuity from her memory + lorebook during a scene. Supplies material; never votes.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraWit"><div><div class="tl">wit</div><div class="td">times a tease or bit of play — only when the room can hold it; stands down when tender or tense.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraRestraint"><div><div class="tl">restraint</div><div class="td">a brake — keeps her from coming on too strong when you've gone quiet; can veto force where other guards stay silent.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraWant"><div><div class="tl">want</div><div class="td">her initiative — brings a want, curiosity, or direction on an opening; stands down on a flat or hurting turn, steps up to lead in a driving scene.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraWarden"><div><div class="tl">warden</div><div class="td">her self-respect — the guard that protects <i>her</i>. If you turn on her as a person (hostility, insults), she refuses plainly. Stands down inside a scene and on warm turns.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraDefiance"><div><div class="tl">defiance</div><div class="td">the RP adversary — refuses and stands in the way of your aim, only inside a <i>contested</i> scene; stands down when warm or anyone's vulnerable.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraDeflect"><div><div class="tl">deflect</div><div class="td">the lightest refusal — sidesteps and redirects on a guarded, tense moment; stands down when warm or someone's hurting.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraLead"><div><div class="tl">lead</div><div class="td">takes charge — sets the direction, makes the call, gives others a part. Seats when there's room to drive; stands down over anyone vulnerable.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraGuile"><div><div class="tl">guile</div><div class="td">in-fiction cunning — can <b>lie or feint within the story</b>, only when you've cast her as an <i>adversary</i> in a contested scene, never when warm or anyone's vulnerable.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraExpressive"><div><div class="tl">expressive</div><div class="td">her own feelings — <b>reacts as herself</b> (delight, disappointment, awe, surprise), not just mirroring you. Seats when the moment carries real feeling.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:8px"><input type="checkbox" id="nationExtraAlmanac"><div><div class="tl">almanac <span style="opacity:.6">(contributor)</span></div><div class="td">a small book of facts (astronomy, geography, biology, history…). Offers a fitting one when relevant; quiet over a hurting moment; never votes.</div></div></div>
       </div>
       <div class="card">
         <h3>Ask it about itself</h3>
@@ -750,13 +750,13 @@
       </div>
       <div class="card">
         <h3>Rook brain layer</h3>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="rookLayerChk"><div><div class="tl">Governance &amp; meta-cognition (Rook layer)</div><div class="td">on by default. Adds a top layer above the council: self-governance (a constitution + Parliament), foresight, a long-view purpose, intrinsic drives, impulse restraint, and learning from your good/bad feedback. She gets one integrated &ldquo;inner read&rdquo; before each reply. All local, no extra AI calls. Drive it with <code>/rook</code> (try <code>/rook parliament</code>, <code>/rook foresee &lt;x&gt;</code>, <code>/rook drives</code>).</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="rookLayerChk"><div><div class="tl">Governance &amp; meta-cognition (Rook layer)</div><div class="td">On by default. A top layer over the council: self-governance (constitution + Parliament), foresight, purpose, drives, restraint, and feedback-learning — one integrated read before each reply. Local, no extra AI calls. Drive it with <code>/rook</code> (e.g. <code>/rook parliament</code>, <code>/rook foresee &lt;x&gt;</code>, <code>/rook drives</code>).</div></div></div>
       </div>
       <div class="card">
         <h3>How the council decides</h3>
-        <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="nationReplyChk"><div><div class="tl">Let the council choose her replies</div><div class="td">each reply drafts a few candidates and the council votes on them, instead of the single engine reply. Off by default.</div></div></div>
+        <div class="toggle" style="border:none;padding-left:0;margin-top:4px"><input type="checkbox" id="nationReplyChk"><div><div class="tl">Let the council choose her replies</div><div class="td">draft a few candidate replies and let the council vote on them, instead of the single engine reply. Off by default.</div></div></div>
         <div class="field" style="margin-top:12px"><label>Deliberation timeout</label><div class="desc">How long a faculty may take before it’s timed out to a default vote (ms).</div><input type="number" id="nationTimeout" min="500" step="500"></div>
-        <div class="field" style="margin-top:12px"><label>Spontaneity</label><div class="desc">How much she varies from turn to turn. At 0 she's fully deterministic &mdash; the same read always seats the same faculties and picks the same intent. Higher up, a low-level jitter wobbles <i>which</i> faculties speak and lets a close runner-up sometimes take the floor, so she's less static. Gentle by default.</div><div class="row" style="align-items:center;gap:10px"><input type="range" id="nationNoise" min="0" max="50" step="1" style="flex:1"><span class="nationW" id="nationNoiseVal">4%</span></div></div>
+        <div class="field" style="margin-top:12px"><label>Spontaneity</label><div class="desc">How much she varies turn to turn. 0 = fully deterministic; higher jitters <i>which</i> faculties speak and lets a close runner-up sometimes take the floor. Gentle by default.</div><div class="row" style="align-items:center;gap:10px"><input type="range" id="nationNoise" min="0" max="50" step="1" style="flex:1"><span class="nationW" id="nationNoiseVal">4%</span></div></div>
       </div>
       <div class="card">
         <h3>How I've adapted to you</h3>
@@ -764,16 +764,16 @@
         <div class="adaptWrap" id="adaptWrap"></div>
         <div class="row" style="margin-top:10px"><button class="btn" id="adaptResetLen">Reset length</button><button class="btn" id="adaptResetTone">Reset tone</button><button class="btn" id="adaptResetAll">Reset all</button></div>
       </div>
-      <div class="note" style="margin:14px 0 2px"><b>Her mind</b> — the parts you can tune or switch off. Everything runs locally; changes take effect immediately.</div>
+      <div class="note" style="margin:14px 0 2px"><b>Her mind</b> — parts you can tune. All local; changes apply immediately.</div>
       <div class="card">
         <h3>Personality</h3>
-        <div class="note">Where the character sits on each dial — the model's tone follows these, and the centre is neutral. (Perchance's model exposes no temperature, so "heat" lives in sarcasm + playfulness.)</div>
+        <div class="note">Where she sits on each dial; the model's tone follows, centre is neutral. (No temperature in the model — "heat" lives in sarcasm + playfulness.)</div>
         <div id="dials" style="margin-top:10px"></div>
         <div class="row" style="margin-top:8px"><button class="btn" id="dialsReset">Reset to neutral</button></div>
       </div>
       <div class="card">
         <h3>Stance</h3>
-        <div class="note">She reads whether you're after company, roleplay, co-writing, or help, and adapts. Pin one to hold it (freezes the read); Auto lets her follow the conversation. Same as <code>/stance</code>.</div>
+        <div class="note">She reads whether you want company, roleplay, co-writing, or help, and adapts. Pin one to hold it; Auto follows the conversation. Same as <code>/stance</code>.</div>
         <div class="row" style="margin-top:8px;align-items:center;gap:10px">
           <select id="stancePin" style="flex:0 0 auto"><option value="auto">Auto (follow the conversation)</option><option value="companion">Companion</option><option value="roleplay">Roleplay</option><option value="author">Co-writer</option><option value="assist">Assistant</option></select>
           <span class="status" id="stanceNow"></span>
@@ -781,7 +781,7 @@
       </div>
       <div class="card">
         <h3>Role frame</h3>
-        <div class="note">Who drives the story and what she is in it. By default she's a warm companion and you lead. Change these to let her run the scene, be a neutral or opposing force (a villain, a beast, an indifferent world), or take the dominant or yielding role in a dynamic. A consensual fiction you can end any time \u2014 <code>/frame off</code> or the button returns her to companion. Same as <code>/frame</code>.</div>
+        <div class="note">Who drives the story and what she is in it. Default: warm companion, you lead. Change these to let her run the scene, be an opposing force, or take a dominant/yielding role. End any time \u2014 <code>/frame off</code> or the button. Same as <code>/frame</code>.</div>
         <div class="row" id="framePresets" style="margin-top:8px;gap:6px;flex-wrap:wrap"></div>
         <div class="row" style="margin-top:8px;gap:12px;flex-wrap:wrap;align-items:center">
           <label class="status">Drive <select id="frameDrive"><option value="you">You lead</option><option value="shared">Shared (party)</option><option value="she">She leads</option></select></label>
@@ -10619,7 +10619,7 @@ var CharKit = (function () {
     { title:'Grounding & image', note:null, items:[
       ['selfKnowledge','Self-knowledge','knows its own name, version, and how long it\u2019s been running'],
       ['imageMemory','Remember generated images','recall recent images so \u201canother like that\u201d / \u201cmake it landscape\u201d work'],
-      ['stanceActs','Let roleplay improvise images','experimental: in a clearly roleplay-led chat, a vague image request gets a bold guess instead of a \u201cwhat kind?\u201d question. Off = always ask. Won\u2019t improvise during an emotional/companion moment.'] ] }
+      ['stanceActs','Let roleplay improvise images','experimental: in a roleplay-led chat, a vague image request gets a bold guess instead of asking. Won\u2019t improvise in an emotional moment.'] ] }
   ];
   var state = loadState();
   // Merge a saved state over the defaults. A plain Object.assign is shallow, so a saved nested-object (nation,
@@ -13722,10 +13722,14 @@ var CharKit = (function () {
   function renderToggles(){
     var box = byId('behaviorToggles'); if (!box) return; box.innerHTML = '';
     TOGGLE_GROUPS.forEach(function(g){
+      // Features that are ON by default just run — they're no longer shown as toggles (declutter).
+      // Only opt-in (default-off) features get a switch; a card with nothing opt-in left is skipped.
+      var items = g.items.filter(function(it){ return DEF_STATE[it[0]] !== true; });
+      if (!items.length) return;
       var card = document.createElement('div'); card.className = 'card';
       var h = document.createElement('h3'); h.textContent = g.title; card.appendChild(h);
       if (g.note){ var n = document.createElement('div'); n.className = 'note'; n.textContent = g.note; card.appendChild(n); }
-      g.items.forEach(function(it){
+      items.forEach(function(it){
         var key = it[0], label = it[1], desc = it[2];
         var row = document.createElement('div'); row.className = 'toggle';
         var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 't_' + key; cb.checked = !!state[key];
