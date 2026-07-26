@@ -11,6 +11,11 @@ weldcomments = {import:weld-comments-plugin}
 // ─────────────────────────────────────────────────────────────────────────────
 // My Girl - Chloe — Perchance generator top-panel
 //
+// BRAIN CORE (synced 2026-07-15 from rook-ai standalone/lib, RK 1.4.7 lineage): the always-on
+// reply brain — window.ChloeBrain (brain.min.js: council/nervous/resolve) + window.ChloeNation
+// (the Seven Nations, now with the sensorium/almanac/calc/routing faculties). API-compatible
+// with the app's createArmy/deliberate/council glue; deliberation weighting is the newer tuning.
+//
 // ROOK BRAIN LAYER (ported from rook-ai v1.1.2): a self-contained, OFF-BY-DEFAULT
 // governance + meta-cognition layer lives in the HTML panel (window.RookLobes). It's
 // inert until you enable it with "/rook on" (or "!chloe rook on"). Once on, it adds

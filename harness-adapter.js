@@ -3,7 +3,7 @@
  * self-knowledge that never refuses. */
 'use strict';
 var N = require('./nation.js');
-var B = require('./brain.min.js');                       // the compiled sub-system
+var B = (function(){ var c=require("fs").readFileSync("./lib/chloe-adapter.bundle.js","utf8"); var b=new Function(c+";return RookChloeBrain;")(); if(!b||typeof b.resolve!=="function") throw new Error("ADAPTER FAILED TO LOAD - refusing to run a vacuous pass"); console.log("[harness] deliberation via NEW BRAIN adapter"); return b; })();                       // the compiled sub-system
 var fail = 0; function ok(c, m){ if (c) console.log('  ok   ' + m); else { fail++; console.log('  FAIL ' + m); } }
 
 ok(N.NATIONS.length === 7, 'seven nations — odd, so a vote never ties');
