@@ -106,6 +106,10 @@ App: `meter` (13632). → the new brain's **feedback/salience learning**; or **P
 - **REMAINING (optional):** the Seven Nations `createArmy` (perceive→intend→deliberate→react) still runs on the
   retained pure scaffolding. Its *decisions* now go through the new brain (it calls `resolve`), but per-mind mood and
   feedback learning are not yet backed by `neuromodulation`/`feedback`. That is the last piece for full book-maker parity.
+
+- **REMAINING (optional deeper migration):** reimplement the deliberation (`ChloeBrain.resolve`/council) + the Seven
+  Nations `createArmy` (perceive→intend→deliberate→react) on the new brain's faculties (selection/executive/feedback/
+  mood-per-mind), instead of the retained pure scaffolding. Bigger, and only worth it for full parity with book-maker.
 - **Note:** the standalone harness (`harness-solo-nation.js`) can't run — its `require('./brain.min.js')` isn't in the
   root (lives in the handoff zips); pre-existing, and it validates the OLD brain we're leaving. Real validation is the
   app-load check above.
