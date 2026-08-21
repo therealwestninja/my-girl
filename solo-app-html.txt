@@ -9694,7 +9694,6 @@ var CharKit = (function () {
   =================================================================== */
 
   /* --- retained brain-agnostic scaffolding (deliberation council, frames, readers, measure, nation) --- */
-<<<<<<< HEAD
 /* MIGRATED: the deliberation substrate now runs on D:/Claude/brain (sibling ../brain) via chloe-adapter.mjs.
    Was: brain.min.js, a compiled copy of the old Chloe/Rook core. resolve() - the vote tally that decides who
    speaks - is now the new brain council.js; the rest of the contract (nervous/council/member/withTimeout) is pure
@@ -10188,10 +10187,6 @@ var RookChloeBrain = (() => {
   return __toCommonJS(chloe_adapter_exports);
 })();
 /* chloe-nation - the Seven Nations: the top, human-readable brain layer.
-=======
-!function(e){"use strict";var n=function(){function e(e,n,t,r){r=r||{},e=(e||[]).filter(function(e){return e&&null!=e.by});var o={};e=e.filter(function(e){return!o[e.by]&&(o[e.by]=!0,!0)}),n=n||[],t=t||[];var i=!!r.allowSelfVote,u=null!=r.vetoQuorum?r.vetoQuorum:1,s={},a={};function l(e){return(s[e]||0)>=u}t.forEach(function(e){e&&null!=e.against&&(s[e.against]=(s[e.against]||0)+1,(a[e.against]=a[e.against]||[]).push({by:e.by,reason:e.reason||""}))});var c=e.filter(function(e){return!l(e.by)}),f=!1;!c.length&&e.length&&(c=e.slice(),f=!0);var d={},v={};c.forEach(function(e){d[e.by]=0}),n.forEach(function(e){if(e&&e.scores){var n=null,t=-1/0;c.forEach(function(r){if(i||e.voter!==r.by){var o=Number(e.scores[r.by]);isFinite(o)&&(d[r.by]+=o,o>t&&(t=o,n=r.by))}}),null!=n&&(v[e.voter]=n)}});var p={},y={};c.forEach(function(e,n){p[e.by]=n,y[e.by]=Number(e.conf)||0});var b=c.slice().sort(function(e,n){return d[n.by]!==d[e.by]?d[n.by]-d[e.by]:y[n.by]!==y[e.by]?y[n.by]-y[e.by]:p[e.by]-p[n.by]}),m=b[0]||null,h=b[1]||null,_=m?d[m.by]-(h?d[h.by]:0):0,k=Object.keys(v).filter(function(e){return i||!m||e!==m.by}),g=!!m&&k.length>0&&k.every(function(e){return v[e]===m.by}),x=m?k.filter(function(e){return v[e]!==m.by}):[],w=m?f?"contested":g?"agreed":_<=(r.consensusMargin||0)?"tie-resolved":"carried":"no-proposals";return{winnerId:m?m.by:null,text:m?m.text:null,status:w,tally:d,margin:_,consensus:!!g,dissent:x,vetoed:Object.keys(s).filter(l),vetoReasons:a}}function n(e,n,t,r){return!n||n<=0?Promise.resolve(e).then(function(e){return{__timeout:!1,value:e}},function(){return{__timeout:!1,value:t}}):new Promise(function(o){var i=!1,u=r.set(function(){i||(i=!0,o({__timeout:!0,value:t}))},n);Promise.resolve(e).then(function(e){i||(i=!0,r.clear(u),o({__timeout:!1,value:e}))},function(){i||(i=!0,r.clear(u),o({__timeout:!1,value:t}))})})}return{createNervous:function(e){e=e||function(){};var n={},t={};function r(e,t){var r=n[e];return r&&(r.state=t),!!r}return{register:function(e){if(!e||!e.id)return null;var t=n[e.id]||{};return t.id=e.id+"",t.kind=e.kind||t.kind||"process",t.role=null!=e.role?e.role:t.role||"",t.does=Array.isArray(e.does)?e.does:t.does||[],t.state=e.state||t.state||"active","function"==typeof e.onSend&&(t._inbox=e.onSend),"function"==typeof e.onAsk&&(t._ask=e.onAsk),e.ready&&"function"==typeof e.ready.then&&(t.ready=e.ready,t.__ready=null,e.ready.then(function(e){t.__ready=!1!==e},function(){t.__ready=!1})),n[t.id]=t,t},list:function(){return Object.keys(n).map(function(e){var t=n[e];return{id:t.id,kind:t.kind,role:t.role,state:t.state}})},describe:function(e){var t=n[e];return t?{id:t.id,kind:t.kind,role:t.role,state:t.state,does:(t.does||[]).slice()}:null},find:function(e){return e=((e||"")+"").toLowerCase(),Object.keys(n).filter(function(t){return(n[t].does||[]).some(function(n){return((n.name||"")+"").toLowerCase()===e})})},setState:r,wake:function(e){return r(e,"active")},sleep:function(e){return r(e,"asleep")},standby:function(e){return r(e,"standby")},send:function(t,r){var o=n[t];if(o&&o._inbox)try{return o._inbox(r),!0}catch(n){e("[nervous] send->"+t+": "+(n&&n.message))}return!1},ask:function(e,t){var r=n[e];if(r&&r._ask)try{return Promise.resolve(r._ask(t))}catch(e){return Promise.reject(e)}return Promise.resolve(null)},publish:function(n,r){var o=0;return(t[n]||[]).slice().forEach(function(t){try{t(r),o++}catch(t){e("[nervous] "+n+" subscriber threw: "+(t&&t.message))}}),o},subscribe:function(e,n){return(t[e]=t[e]||[]).push(n),function(){t[e]=(t[e]||[]).filter(function(e){return e!==n})}},health:function(e){var t=n[e];return t?t.ready?!0===t.__ready?"ready":!1===t.__ready?"degraded":"pending":t.state:"absent"}}},resolve:e,member:function(e,n,t){return t=t||{},{id:e+"",role:n||"",propose:function(e){return Promise.resolve(t.propose?t.propose(e):null)},vote:function(e,n){return Promise.resolve(t.vote?t.vote(e,n):e&&Number(e.conf)||0)},veto:function(e,n){return Promise.resolve(t.veto?t.veto(e,n):{veto:!1})}}},createCouncil:function(t){var r=(t=t||{}).members||[],o=t.nervous||null,i=t.opts||{},u=t.timeoutMs||0,s=t.idleMs||0,a=t.log||function(){},l=t.now||function(){return Date.now()},c=t.sched||{set:function(e,n){return setTimeout(e,n)},clear:function(e){clearTimeout(e)}},f=null!=i.defaultScore?i.defaultScore:0,d={};function v(e){o&&o.register({id:e.id,kind:"brain",role:e.role,does:[{name:"propose",how:"ask(id,{type:'propose',ctx})"},{name:"vote",how:"ask(id,{type:'vote',proposal,ctx})"},{name:"veto",how:"ask(id,{type:'veto',proposal,ctx})"}],onAsk:function(n){return n?"propose"===n.type?e.propose(n.ctx):"vote"===n.type?e.vote(n.proposal,n.ctx):"veto"===n.type?e.veto(n.proposal,n.ctx):null:null}}),d[e.id]=l()}function p(){var e=[];return r.forEach(function(n){var t=o?o.health(n.id):"active",r=s&&l()-(d[n.id]||0)>s;"absent"===t&&v(n),("absent"===t||"asleep"===t||r)&&(o&&o.wake(n.id),d[n.id]=l(),e.push(n.id))}),e}function y(e,t,r,i,s,a){return a&&a[e.id]?Promise.resolve(s):n(o?Promise.resolve(o.ask(e.id,{type:t,proposal:r,ctx:i})):Promise.resolve("propose"===t?e.propose(i):"vote"===t?e.vote(r,i):e.veto(r,i)),u,s,c).then(function(n){return n.__timeout?(o&&o.sleep(e.id),a&&(a[e.id]=!0)):d[e.id]=l(),n.value})}return r.length%2==0&&a("[society] even membership ("+r.length+") — keep it odd so votes never split"),r.forEach(v),{deliberate:function(n,t){p();var o={};return Promise.all(r.map(function(e){return y(e,"propose",null,n,null,o).then(function(n){return{by:e.id,r:n}})})).then(function(u){var s=(t||[]).slice().concat(u.map(function(e){var n=e.r;return n&&null!=n.text?{by:e.by,text:n.text+"",conf:Number(n.conf)||0}:null}).filter(Boolean));if(!s.length)return{status:"no-proposals",text:null,winnerId:null,transcript:{proposals:[],ballots:[],vetoes:[]},participation:r.map(function(e){return e.id})};var a=[],l=[],c=r.map(function(e){var t={};return Promise.all(s.map(function(r){return y(e,"vote",r,n,f,o).then(function(e){t[r.by]="number"==typeof e&&isFinite(e)?e:f})})).then(function(){a.push({voter:e.id,scores:t})})}),d=r.map(function(e){return Promise.all(s.map(function(t){return y(e,"veto",t,n,{veto:!1},o).then(function(n){n&&n.veto&&l.push({by:e.id,against:t.by,reason:n.reason||""})})}))});return Promise.all(c.concat(d)).then(function(){var n=e(s,a,l,i);return n.transcript={proposals:s,ballots:a,vetoes:l},n.participation=a.map(function(e){return e.voter}),n})})},resolve:e,members:r,nervous:o,wakeStalled:p,size:r.length}},withTimeout:n}}();"undefined"!=typeof module&&module.exports&&(module.exports=n),e.ChloeBrain=n,e.ChloeCouncil=n}("undefined"!=typeof globalThis?globalThis:this);
-/* chloe-nation — the Seven Nations: the top, human-readable brain layer.
->>>>>>> fb73237d6714794af1d8122b9c3519e109c1accf
  *
  * Seven small faculties of mind each weigh in on what to say. Their votes are tallied by the weights you set,
  * using the same Brain sub-system underneath (ChloeBrain.resolve), and the winning reply is spoken. Seven, so a
@@ -12011,15 +12006,14 @@ var RookChloeAffect = (() => {
     toneHint: () => toneHint
   });
 
-  // ../brain/src/text.js
+  // D:/Claude/brain/src/text.js
   var tokenize = (s) => String(s).toLowerCase().match(/[a-z']+/g) || [];
   var QUESTION_OPENERS = ["who", "what", "when", "where", "why", "how", "is", "are", "do", "does", "can", "could", "would", "will"];
 
-  // ../brain/src/math.js
+  // D:/Claude/brain/src/math.js
   var clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 
-  // ../brain/src/features.js
-<<<<<<< HEAD
+  // D:/Claude/brain/src/features.js
   var POSITIVE = /* @__PURE__ */ new Set([
     "thanks",
     "thank",
@@ -12053,7 +12047,7 @@ var RookChloeAffect = (() => {
     "like",
     "best",
     "better",
-    // warmth + esteem + relief (companion register) — so affection and reassurance register, not just task praise
+    // warmth + esteem + relief (companion register) - so affection and reassurance register, not just task praise
     "proud",
     "grateful",
     "adore",
@@ -12116,7 +12110,7 @@ var RookChloeAffect = (() => {
     "sucks",
     "garbage",
     "nonsense",
-    // dismissiveness + hurt + coldness currently read as neutral — the biggest expressiveness gap
+    // dismissiveness + hurt + coldness currently read as neutral - the biggest expressiveness gap
     "whatever",
     "harsh",
     "rude",
@@ -12151,8 +12145,12 @@ var RookChloeAffect = (() => {
     "letdown"
   ]);
   var REWARD_CUES = /* @__PURE__ */ new Set(["thanks", "thank", "love", "great", "awesome", "yes", "appreciate", "perfect", "nice", "excellent", "brilliant", "amazing", "wonderful", "helpful", "works", "solved", "fixed", "glad", "proud", "grateful", "adore", "delighted", "relieved", "trust"]);
+  var STRONG_REWARD = /* @__PURE__ */ new Set(["love", "adore", "grateful", "appreciate", "amazing", "wonderful", "brilliant"]);
   var THREAT_CUES = /* @__PURE__ */ new Set(["stop", "no", "hate", "angry", "stupid", "idiot", "now", "hurry", "emergency", "help", "danger", "careful", "warning", "urgent", "mad", "furious", "wrong", "scared", "afraid", "panic", "crisis", "attack", "fight", "threat", "quit", "leave", "unacceptable"]);
   var DISGUST_CUES = /* @__PURE__ */ new Set(["gross", "disgusting", "disgust", "disgusted", "vile", "revolting", "revulsion", "nasty", "creepy", "filthy", "repulsive", "repulsed", "sickening", "yuck", "ew", "eww", "rotten", "foul", "putrid", "obscene", "depraved", "gruesome", "slimy", "vomit", "puke", "contaminated", "grotesque"]);
+  var DESIRE_CUES = /* @__PURE__ */ new Set(["want", "wants", "wanting", "need", "needs", "crave", "craving", "desire", "desires", "yearn", "yearning", "ache", "aching", "long", "longing", "yours", "mine", "closer", "close", "touch", "kiss", "hold", "embrace", "hunger", "hungry", "tempt", "tempting", "tempted", "irresistible", "attracted", "attraction", "wish", "devour", "pull", "magnetic"]);
+  var CHALLENGE_CUES = /* @__PURE__ */ new Set(["dare", "dares", "daring", "defy", "defiant", "defiance", "prove", "challenge", "challenged", "challenging", "bet", "provoke", "provoking", "provocative", "try", "impress", "chicken", "coward", "gutless", "spineless", "weak", "makeme", "outmatch", "beat", "match"]);
+  var PLAYFUL_BID_CUES = /* @__PURE__ */ new Set(["wink", "tease", "teasing", "teased", "flirt", "flirty", "flirting", "playful", "banter", "cheeky", "sassy", "smirk", "smirking", "giggle", "giggling", "hehe", "haha", "lol", "teehee", "kidding", "joking", "joke", "silly", "gotcha", "tsk", "naughty", "mischief", "mischievous"]);
   var NEGATORS = /* @__PURE__ */ new Set([
     "not",
     "no",
@@ -12170,7 +12168,7 @@ var RookChloeAffect = (() => {
     "hardly",
     "barely",
     "without",
-    // apostrophe-less variants (casual typing) — tokenize keeps apostrophes, so these would otherwise miss
+    // apostrophe-less variants (casual typing) - tokenize keeps apostrophes, so these would otherwise miss
     "isnt",
     "wasnt",
     "dont",
@@ -12186,13 +12184,6 @@ var RookChloeAffect = (() => {
     "havent",
     "hasnt"
   ]);
-=======
-  var POSITIVE = /* @__PURE__ */ new Set(["thanks", "thank", "love", "great", "good", "yes", "awesome", "nice", "happy", "cool", "please", "appreciate", "perfect", "excellent", "brilliant", "amazing", "wonderful", "helpful", "clear", "fixed", "works", "working", "solved", "right", "correct", "beautiful", "fantastic", "glad", "enjoy", "like", "best", "better"]);
-  var NEGATIVE = /* @__PURE__ */ new Set(["no", "stop", "hate", "bad", "angry", "terrible", "awful", "wrong", "annoying", "stupid", "idiot", "broken", "bug", "buggy", "error", "fail", "failed", "crash", "crashed", "slow", "confusing", "useless", "dislike", "frustrated", "frustrating", "disappointing", "worse", "worst", "hurts", "painful", "sucks", "garbage", "nonsense"]);
-  var REWARD_CUES = /* @__PURE__ */ new Set(["thanks", "thank", "love", "great", "awesome", "yes", "appreciate", "perfect", "nice", "excellent", "brilliant", "amazing", "wonderful", "helpful", "works", "solved", "fixed", "glad"]);
-  var THREAT_CUES = /* @__PURE__ */ new Set(["stop", "no", "hate", "angry", "stupid", "idiot", "now", "hurry", "emergency", "help", "danger", "careful", "warning", "urgent", "mad", "furious", "wrong"]);
-  var NEGATORS = /* @__PURE__ */ new Set(["not", "no", "never", "isn't", "wasn't", "don't", "doesn't", "didn't", "won't", "can't", "cannot", "aren't", "ain't", "hardly", "barely", "without"]);
->>>>>>> fb73237d6714794af1d8122b9c3519e109c1accf
   function countCues(tokens, cues) {
     let plain = 0, negated = 0;
     for (let i = 0; i < tokens.length; i++) {
@@ -12209,7 +12200,12 @@ var RookChloeAffect = (() => {
     const tokens = tokenize(lower);
     const ntok = Math.max(1, tokens.length);
     const set = new Set(tokens);
-    const p = countCues(tokens, POSITIVE), n = countCues(tokens, NEGATIVE);
+    const lex = context.lexicon || null;
+    const aug = (base, extra) => extra && extra.length ? /* @__PURE__ */ new Set([...base, ...extra]) : base;
+    const POS = aug(POSITIVE, lex && lex.positive), NEG = aug(NEGATIVE, lex && lex.negative);
+    const REW = aug(REWARD_CUES, lex && lex.reward), THR = aug(THREAT_CUES, lex && lex.threat), DIS = aug(DISGUST_CUES, lex && lex.disgust);
+    const DES = aug(DESIRE_CUES, lex && lex.desire), CHA = aug(CHALLENGE_CUES, lex && lex.challenge), PLB = aug(PLAYFUL_BID_CUES, lex && lex.playfulBid);
+    const p = countCues(tokens, POS), n = countCues(tokens, NEG);
     const posScore = p.plain + n.negated;
     const negScore = n.plain + p.negated;
     const valence = clamp((posScore - negScore) / Math.sqrt(ntok), -1, 1);
@@ -12217,15 +12213,17 @@ var RookChloeAffect = (() => {
     const bangs = (raw.match(/!/g) || []).length;
     const arousal = clamp(0.3 + caps + 0.15 * bangs + 0.2 * Math.min(1, ntok / 40), 0, 1);
     const isQuestion = lower.trim().endsWith("?") || QUESTION_OPENERS.includes(tokens[0]) ? 1 : 0;
-    const rw = countCues(tokens, REWARD_CUES), th = countCues(tokens, THREAT_CUES);
-    const reward = clamp((rw.plain - rw.negated) / 2, 0, 1);
+    const rw = countCues(tokens, REW), th = countCues(tokens, THR);
+    const strong = countCues(tokens, aug(STRONG_REWARD, lex && lex.rewardStrong));
+    const reward = clamp((rw.plain + strong.plain - rw.negated - strong.negated) / 2, 0, 1);
     const threat = clamp((th.plain - th.negated) / 2, 0, 1);
-<<<<<<< HEAD
     const displeasure = clamp(Math.max(0, -valence) - threat, 0, 1);
-    const dg = countCues(tokens, DISGUST_CUES);
+    const dg = countCues(tokens, DIS);
     const disgust = clamp((dg.plain - dg.negated) / 2, 0, 1);
-=======
->>>>>>> fb73237d6714794af1d8122b9c3519e109c1accf
+    const ds = countCues(tokens, DES), ch = countCues(tokens, CHA), pb = countCues(tokens, PLB);
+    const desire = clamp((ds.plain - ds.negated) / 2, 0, 1);
+    const challenge = clamp((ch.plain - ch.negated) / 2, 0, 1);
+    const playfulBid = clamp((pb.plain - pb.negated) / 2, 0, 1);
     let maxSim = 0;
     for (const m of recent) {
       const setB = new Set(tokenize(m));
@@ -12234,11 +12232,7 @@ var RookChloeAffect = (() => {
       maxSim = Math.max(maxSim, inter / uni);
     }
     const novelty = clamp(1 - maxSim, 0, 1);
-<<<<<<< HEAD
-    return { valence, arousal, novelty, isQuestion, reward, threat, displeasure, disgust };
-=======
-    return { valence, arousal, novelty, isQuestion, reward, threat };
->>>>>>> fb73237d6714794af1d8122b9c3519e109c1accf
+    return { valence, arousal, novelty, isQuestion, reward, threat, displeasure, disgust, desire, challenge, playfulBid };
   }
 
   // chloe-affect.mjs
@@ -12279,11 +12273,7 @@ var RookChloeAffect = (() => {
   function feltDirective(snap) {
     const t = toneHint(snap);
     if (!t) return "";
-<<<<<<< HEAD
-    return "Let the emotional tenor of the moment color your voice right now - " + t + " - but do not name it, announce it, or explain it. It shapes HOW you speak, never becomes WHAT you say.";
-=======
     return "Let the emotional tenor of the moment color your voice right now \u2014 " + t + " \u2014 but do not name it, announce it, or explain it. It shapes HOW you speak, never becomes WHAT you say.";
->>>>>>> fb73237d6714794af1d8122b9c3519e109c1accf
   }
   var AROUSAL_REST = 0.42;
   function createReader(opts) {
@@ -12345,6 +12335,406 @@ var RookChloeAffect = (() => {
   return __toCommonJS(chloe_affect_exports);
 })();
 
+
+
+
+/* ===== WIDENED BRAIN: theoryOfMind + innerVoice + metacognition + epistemicAffect -> window.ChloeMind ===== */
+var RookChloeMind = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // chloe-mind.mjs
+  var chloe_mind_exports = {};
+  __export(chloe_mind_exports, {
+    default: () => chloe_mind_default,
+    makeChloeMind: () => makeChloeMind
+  });
+
+  // D:/Claude/brain/src/math.js
+  var clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
+  var clamp01 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
+  var num = (x, d = 0) => typeof x === "number" && isFinite(x) ? x : d;
+  var ema = (old, target, alpha) => old * (1 - alpha) + target * alpha;
+
+  // D:/Claude/brain/src/theoryOfMind.js
+  function inferNeed(intent, valence, stance) {
+    if (stance < -0.35) return "conflict";
+    if (valence < -0.25) return ["question", "task", "code", "ground"].includes(intent) ? "help" : "comfort";
+    if (["question", "task", "code", "ground"].includes(intent)) return "information";
+    if (["greet", "ack", "chitchat"].includes(intent)) return "company";
+    if (valence > 0.35) return "connection";
+    return "presence";
+  }
+  var NEED_PHRASE = {
+    comfort: "comfort and reassurance",
+    venting: "to be heard",
+    help: "help working through a problem",
+    information: "a clear, direct answer",
+    company: "light, easy company",
+    connection: "to share something good with you",
+    conflict: "they seem frustrated with you \u2014 tread carefully and don't get defensive",
+    presence: "mostly just your presence"
+  };
+  var stanceWord = (s) => s > 0.35 ? "warm" : s > 0.12 ? "at ease" : s < -0.35 ? "cold" : s < -0.12 ? "guarded" : "neutral";
+  var affectWord = (v, a) => `${v > 0.3 ? "upbeat" : v < -0.3 ? "low" : "even"}${a > 0.6 ? ", keyed-up" : a < 0.3 ? ", subdued" : ""}`;
+  function makeTheoryOfMind({ alpha = 0.3, stanceAlpha = 0.25, floor = 3, blockFloor = 0.34, proposeFloor = 0.45, driftBeta = 0.3, driftThreshold = 0.45 } = {}) {
+    let valence = 0, arousal = 0.4, stance = 0, engagement = 0.5, acuteV = 0;
+    let driftEwma = 0, resyncs = 0;
+    const needScores = /* @__PURE__ */ new Map();
+    let need = "presence";
+    let n = 0;
+    let expV = 0, expS = 0, certainty = 0;
+    const argmaxNeed = () => {
+      let best = "presence", m = -Infinity;
+      for (const [k, v] of needScores) if (v > m) {
+        m = v;
+        best = k;
+      }
+      return best;
+    };
+    function read({ features = {}, intent = "", message = "" } = {}) {
+      const v = Number(features.valence) || 0;
+      const social = clamp((Number(features.reward) || 0) - (Number(features.threat) || 0), -1, 1);
+      const words = String(message).trim().split(/\s+/).filter(Boolean).length;
+      const turnEng = clamp01(words / 25 + (intent === "question" ? 0.15 : 0));
+      const surprise = n === 0 ? 0 : clamp01((Math.abs(v - expV) + Math.abs(social - expS)) / 2);
+      valence = ema(valence, v, alpha);
+      arousal = ema(arousal, Number(features.arousal) || 0, alpha);
+      stance = ema(stance, social, stanceAlpha);
+      engagement = ema(engagement, turnEng, alpha);
+      acuteV = v;
+      const turnNeed = inferNeed(intent, Math.min(valence, acuteV), stance);
+      for (const k of needScores.keys()) needScores.set(k, needScores.get(k) * 0.7);
+      needScores.set(turnNeed, (needScores.get(turnNeed) || 0) + 1);
+      need = argmaxNeed();
+      expV += 0.3 * (v - expV);
+      expS += 0.3 * (social - expS);
+      n += 1;
+      certainty = clamp01(n / (n + floor) * (1 - 0.5 * surprise));
+      driftEwma = ema(driftEwma, surprise, driftBeta);
+      let resynced = false;
+      if (driftEwma > driftThreshold && n > floor) {
+        expV = v;
+        expS = social;
+        certainty = clamp01(certainty * 0.4);
+        driftEwma = 0;
+        resyncs += 1;
+        resynced = true;
+      }
+      return { ...snapshot(), surprise: +surprise.toFixed(2), drift: +driftEwma.toFixed(2), resynced };
+    }
+    function snapshot() {
+      return { valence: +valence.toFixed(2), arousal: +arousal.toFixed(2), stance: +stance.toFixed(2), engagement: +engagement.toFixed(2), need, certainty: +certainty.toFixed(2) };
+    }
+    return {
+      read,
+      snapshot,
+      getNeed: () => need,
+      getStance: () => +stance.toFixed(2),
+      // Attunement block for the mouth — a read of the person so the reply meets their state. Silent until the model has
+      // enough evidence to be worth trusting (early turns don't inject a low-confidence guess). Framed as inference the
+      // model should ATTUNE to, never narrate back at the user.
+      block() {
+        if (certainty < blockFloor) return "";
+        return `Read of the person you're talking with (your inference \u2014 may be wrong): they seem ${affectWord(Math.min(valence, acuteV), arousal)} and ${stanceWord(stance)} toward you, and appear to want ${NEED_PHRASE[need] || "your presence"}. Let this shape HOW you meet them \u2014 attune to it, don't state it back to them.`;
+      },
+      // Council candidate: when the user reads as needing support (and the model is confident enough), advocate a caring
+      // RESPOND — tagged approach+protect so it draws on both engagement and protective chemistry. Returns null otherwise,
+      // so a fresh or neutral read adds NO proposal and the council is unchanged (default suite stays green).
+      propose() {
+        if (certainty < proposeFloor) return null;
+        const distress = Math.min(valence, acuteV);
+        const care = (need === "comfort" || need === "venting") && distress < -0.15;
+        if (!care) return null;
+        const conf = clamp(0.4 + 0.3 * certainty + 0.3 * Math.min(1, -distress), 0, 0.75);
+        return { by: "tom", action: "RESPOND", conf: +conf.toFixed(3), tags: ["approach", "protect"] };
+      },
+      serialize() {
+        return { valence, arousal, stance, engagement, acuteV, need, n, expV, expS, certainty, driftEwma, resyncs, needScores: Array.from(needScores.entries()) };
+      },
+      restore(s) {
+        if (!s) return;
+        valence = s.valence || 0;
+        arousal = s.arousal ?? 0.4;
+        stance = s.stance || 0;
+        engagement = s.engagement ?? 0.5;
+        acuteV = s.acuteV || 0;
+        need = s.need || "presence";
+        n = s.n || 0;
+        expV = s.expV || 0;
+        expS = s.expS || 0;
+        certainty = s.certainty || 0;
+        driftEwma = s.driftEwma || 0;
+        resyncs = s.resyncs || 0;
+        needScores.clear();
+        if (Array.isArray(s.needScores)) for (const [k, v] of s.needScores) needScores.set(k, v);
+      }
+    };
+  }
+
+  // D:/Claude/brain/src/text.js
+  var norm = (t) => String(t || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+  // D:/Claude/brain/src/innerVoice.js
+  var FRAMES = {
+    remind: { open: "That reminds me", weight: 1 },
+    // a tangential memory that floated up
+    ponder: { open: "I was thinking about", weight: 0.92 },
+    // a standing goal resurfacing (volition)
+    echo: { open: "Like the time", weight: 0.85 },
+    // an episodic callback tied to the topic
+    dream: { open: "I had a dream about", weight: 0.8 },
+    // a consolidation/distiller product
+    scenario: { open: "I ran the scenario", weight: 0.92 },
+    // an imagination counterfactual
+    wonder: { open: "I keep wondering", weight: 0.9 }
+    // a grounded open question from respoolSelf — noticed, not yet understood
+  };
+  function makeInnerVoice({ threshold = 0.52, cooldownMs = 9e4, gain = 1, recentDamp = 0.45, recentN = 4, frames = FRAMES } = {}) {
+    let lastAt = null;
+    let recent = [];
+    function consider(material = {}) {
+      const { mood = null, silenceMs = 0, now = null } = material;
+      const arousal = mood && typeof mood.arousal === "number" ? mood.arousal : 0.4;
+      const c = [];
+      if (material.remind && material.remind.text) c.push({ type: "remind", seed: material.remind.text, pull: (0.45 + 0.55 * num(material.remind.sim, 0.6)) * (0.85 + 0.3 * arousal) });
+      if (material.ponder && material.ponder.text) c.push({ type: "ponder", seed: material.ponder.text, pull: 0.55 + 0.3 * num(material.ponder.priority, 0.5) + 0.25 * Math.min(1, silenceMs / (30 * 6e4)) });
+      if (material.echo && material.echo.text) c.push({ type: "echo", seed: material.echo.text, pull: 0.4 + 0.55 * num(material.echo.sim, 0.6) });
+      if (material.dream && material.dream.text) c.push({ type: "dream", seed: material.dream.text, pull: 0.72 * num(material.dream.freshness, 1) });
+      if (material.wonder && material.wonder.text) c.push({ type: "wonder", seed: material.wonder.text, pull: 0.5 + 0.4 * num(material.wonder.freshness, 1) });
+      if (material.scenario && material.scenario.text) c.push({ type: "scenario", seed: material.scenario.text, pull: 0.6 + 0.3 * arousal, extra: material.scenario });
+      if (!c.length) return { surface: false };
+      for (const x of c) {
+        const said = recent.includes(norm(x.seed));
+        x.pull = +(x.pull * frames[x.type].weight * gain * (said ? recentDamp : 1)).toFixed(3);
+      }
+      c.sort((a, b) => b.pull - a.pull || a.type.localeCompare(b.type));
+      const top = c[0];
+      const sinceLast = now != null && lastAt != null ? now - lastAt : Infinity;
+      const surface = top.pull >= threshold && sinceLast >= cooldownMs;
+      return { surface, type: top.type, seed: top.seed, frame: frames[top.type].open, pull: top.pull, extra: top.extra || null, considered: c.map((x) => ({ type: x.type, pull: x.pull })) };
+    }
+    function noteSurfaced(now, seed = null) {
+      if (now != null) lastAt = now;
+      if (seed) {
+        recent.push(norm(seed));
+        if (recent.length > recentN) recent.shift();
+      }
+    }
+    const ACT = { REFLEX_REPLY: "just answer", RESPOND: "respond", ESCALATE: "dig into it", HOLD: "hold back", QUIET: "stay quiet", WAIT: "wait", ACT: "go for it", REACH_OUT: "reach out" };
+    function render(dec) {
+      if (!dec || !dec.surface) return "";
+      if (dec.type === "scenario" && dec.extra && dec.extra.action) {
+        const a = ACT[dec.extra.action] || String(dec.extra.action).toLowerCase().replace(/_/g, " ");
+        return `${dec.frame} where ${dec.seed} \u2014 I think I'd ${a}.`;
+      }
+      return `${dec.frame} ${dec.seed}.`;
+    }
+    return { consider, noteSurfaced, render, lastAt: () => lastAt, snapshot: () => ({ lastAt, recent: recent.slice() }), restore: (s) => {
+      if (s) {
+        lastAt = s.lastAt ?? null;
+        recent = Array.isArray(s.recent) ? s.recent.slice() : [];
+      }
+    } };
+  }
+
+  // D:/Claude/brain/src/metacognition.js
+  function makeMetacognition({ groundThreshold = 0.2, certaintyFloor = 0.35, confuseSurprise = 0.6, confuseConfidence = 0.1, ema: ema2 = 0.2 } = {}) {
+    let avgCertainty = null, confusion = 0, turns = 0;
+    function assess({ intent = "respond", factHit = false, relevance = 0, confidence = 0, surprise = 0 } = {}) {
+      const isKnowledgeQ = intent === "question";
+      const basis = factHit ? "fact" : relevance >= groundThreshold ? "memory" : isKnowledgeQ ? "none" : "social";
+      const known = basis !== "none";
+      const groundScore = basis === "fact" ? 1 : basis === "memory" ? clamp(0.5 + relevance) : basis === "social" ? 0.7 : 0.12;
+      const decisiveness = clamp(confidence * 2.5);
+      const certainty = clamp(0.5 * groundScore + 0.3 * decisiveness + 0.2 * (1 - clamp(surprise)));
+      const confused = surprise >= confuseSurprise && confidence < confuseConfidence;
+      const hedge = isKnowledgeQ && basis === "none" && certainty < certaintyFloor;
+      return { certainty: +certainty.toFixed(2), known, confused, basis, hedge };
+    }
+    function observe(a) {
+      turns += 1;
+      avgCertainty = avgCertainty == null ? a.certainty : avgCertainty + (a.certainty - avgCertainty) * ema2;
+      confusion += ((a.confused ? 1 : 0) - confusion) * ema2;
+      return state();
+    }
+    function state() {
+      return { avgCertainty: avgCertainty == null ? null : +avgCertainty.toFixed(2), confusionRate: +confusion.toFixed(2), turns };
+    }
+    return { assess, observe, state };
+  }
+
+  // D:/Claude/brain/src/epistemicAffect.js
+  var clamp012 = (x) => Math.max(0, Math.min(1, Number(x) || 0));
+  var EPISTEMIC = {
+    curious: { valence: 0.45, arousal: 0.55, chem: { dopamine: 0.55, acetylcholine: 0.25 }, drives: true, say: "I want to dig into that" },
+    uncertain: { valence: -0.15, arousal: 0.35, chem: { norepinephrine: 0.2 }, drives: true, say: "I'm not sure \u2014 I'd rather check than guess" },
+    doubtful: { valence: -0.2, arousal: 0.3, chem: { norepinephrine: 0.18 }, drives: true, say: "I might have that wrong" },
+    confused: { valence: -0.4, arousal: 0.62, chem: { norepinephrine: 0.5, dopamine: -0.2 }, drives: true, say: "something doesn't add up here" },
+    troubled: { valence: -0.3, arousal: 0.35, chem: { norepinephrine: 0.3, serotonin: -0.1 }, drives: true, say: "this is nagging at me \u2014 a piece that doesn't fit yet" },
+    // a held, unresolved contradiction
+    aha: { valence: 0.7, arousal: 0.5, chem: { dopamine: 0.9, serotonin: 0.2 }, drives: false, say: "oh \u2014 that clicks now" },
+    // RESOLUTION — the reward
+    assured: { valence: 0.3, arousal: 0.2, chem: { serotonin: 0.22 }, drives: false, say: "I've got solid ground here" }
+  };
+  function makeEpistemicAffect({ now = () => Date.now() } = {}) {
+    const openGaps = /* @__PURE__ */ new Map();
+    function appraise(chems, state = {}) {
+      const conf = clamp012(state.confidence != null ? state.confidence : 0.5);
+      const gap = clamp012(typeof state.gap === "boolean" ? state.gap ? 1 : 0 : state.gap);
+      const contradiction = clamp012(state.contradiction);
+      const surprise = clamp012(state.surprise);
+      let emo;
+      if (state.resolved) emo = "aha";
+      else if (contradiction >= 0.5) emo = "confused";
+      else if (contradiction > 0) emo = "troubled";
+      else if (surprise >= 0.5) emo = "confused";
+      else if (gap >= 0.5 && conf >= 0.5) emo = "curious";
+      else if (gap >= 0.5) emo = "uncertain";
+      else if (conf < 0.35) emo = "doubtful";
+      else emo = "assured";
+      const E = EPISTEMIC[emo];
+      if (chems && typeof chems.burst === "function") for (const [c, m] of Object.entries(E.chem)) chems.burst(c, m);
+      return { emotion: emo, drives: E.drives, say: E.say, affect: { valence: E.valence, arousal: E.arousal } };
+    }
+    function voice(emotion, { topic = "", canLookup = false } = {}) {
+      const t = topic ? ` about ${topic}` : "";
+      if ((emotion === "uncertain" || emotion === "doubtful") && canLookup) return `I don't know${t} \u2014 but I can look that up.`;
+      if (emotion === "curious") return `I want to dig into${t || " that"}.`;
+      if (emotion === "confused") return `Something doesn't add up${t} \u2014 let me work it out.`;
+      if (emotion === "troubled") return `${topic ? topic[0].toUpperCase() + topic.slice(1) : "Something"} is nagging at me \u2014 it doesn't fit yet.`;
+      if (emotion === "aha") return `Oh \u2014 ${topic || "that"} clicks now.`;
+      if (emotion === "assured") return `I'm on solid ground${t}.`;
+      return EPISTEMIC[emotion] ? EPISTEMIC[emotion].say : "";
+    }
+    function noteGap(id, topic = "", at = 0) {
+      if (id) openGaps.set(id, { topic, at: at | 0 });
+      return openGaps.size;
+    }
+    function closeGap(id, chems) {
+      const g = openGaps.get(id);
+      if (!g) return null;
+      openGaps.delete(id);
+      return { ...appraise(chems, { resolved: true }), topic: g.topic };
+    }
+    return { appraise, voice, noteGap, closeGap, openGaps: () => [...openGaps.values()], EPISTEMIC };
+  }
+
+  // chloe-mind.mjs
+  function makeChloeMind(opts = {}) {
+    const tom = makeTheoryOfMind(opts.tom || {});
+    const inner = makeInnerVoice(opts.inner || {});
+    const meta = makeMetacognition(opts.meta || {});
+    const epi = makeEpistemicAffect(opts.epistemic || {});
+    function observe(turn = {}) {
+      const { message = "", intent = "respond", features = {}, mood = null, chems = null, signals = {}, material = {}, now = Date.now() } = turn || {};
+      let tom_ = null, block = "", propose = null;
+      try {
+        tom_ = tom.read({ features, intent, message });
+        block = tom.block();
+        propose = tom.propose();
+      } catch (e) {
+      }
+      let meta_ = null;
+      try {
+        const a = meta.assess({ intent, factHit: signals.factHit, relevance: signals.relevance, confidence: signals.confidence, surprise: signals.surprise });
+        meta_ = Object.assign({}, a, meta.observe(a));
+      } catch (e) {
+      }
+      let epi_ = null;
+      try {
+        epi_ = epi.appraise(chems, { confidence: signals.confidence, gap: signals.gap, contradiction: signals.contradiction, surprise: signals.surprise, resolved: signals.resolved });
+      } catch (e) {
+      }
+      let inner_ = null;
+      try {
+        const mat = Object.assign({}, material, { mood: mood || (tom_ ? { arousal: tom_.arousal } : null), now });
+        const dec = inner.consider(mat);
+        if (dec && dec.surface) {
+          const text = inner.render(dec);
+          inner.noteSurfaced(now, dec.seed);
+          inner_ = { type: dec.type, text, frame: dec.frame, seed: dec.seed, pull: dec.pull };
+        }
+      } catch (e) {
+      }
+      return { tom: tom_ ? Object.assign({}, tom_, { block, propose }) : null, meta: meta_, epistemic: epi_, inner: inner_ };
+    }
+    return {
+      observe,
+      tom,
+      inner,
+      meta,
+      epistemic: epi,
+      // raw faculties for advanced callers
+      serialize: () => {
+        try {
+          return { tom: tom.serialize(), inner: inner.snapshot() };
+        } catch (e) {
+          return null;
+        }
+      },
+      restore: (s) => {
+        if (!s) return;
+        try {
+          tom.restore(s.tom);
+        } catch (e) {
+        }
+        try {
+          inner.restore(s.inner);
+        } catch (e) {
+        }
+      }
+    };
+  }
+  var mind = makeChloeMind();
+  var api = {
+    observe: (turn) => {
+      try {
+        return mind.observe(turn);
+      } catch (e) {
+        return { tom: null, meta: null, epistemic: null, inner: null };
+      }
+    },
+    tomBlock: () => {
+      try {
+        return mind.tom.block();
+      } catch (e) {
+        return "";
+      }
+    },
+    tomPropose: () => {
+      try {
+        return mind.tom.propose();
+      } catch (e) {
+        return null;
+      }
+    },
+    serialize: () => mind.serialize(),
+    restore: (s) => mind.restore(s),
+    make: makeChloeMind,
+    _mind: mind
+  };
+  if (typeof window !== "undefined") {
+    window.ChloeMind = api;
+  }
+  var chloe_mind_default = api;
+  return __toCommonJS(chloe_mind_exports);
+})();
 
 
 /* ============================ Chloe-bot glue ============================ */
@@ -12525,6 +12915,9 @@ var RookChloeAffect = (() => {
     try { var fd = window.ChloeFrame ? window.ChloeFrame.directive(state.frame) : ''; if (fd) list.splice(1, 0, { id:'roleframe', at: bc.now, text: fd, priority: 80 }); } catch(e){}
     // affect colors her VOICE (not the words): a short tone line when the emotional tenor is notable, off if toggled off
     try { if (state.feltVoice !== false && window.ChloeAffect){ var ar = getAffect(); if (ar){ var fl = window.ChloeAffect.feltDirective(ar.snapshot()); if (fl) list.push({ id:'feltvoice', at: bc.now, text: fl }); } } } catch(e){}
+    // ChloeMind: a live read of the USER (theory-of-mind) so replies meet where their head is at. Self-gating —
+    // tomBlock() returns '' until the model has enough evidence, and it's framed to ATTUNE to, never state back.
+    try { if (window.ChloeMind){ var tb = window.ChloeMind.tomBlock(); if (tb) list.push({ id:'attunement', at: bc.now, text: tb, priority: 75 }); } } catch(e){}
     try { var sr = sceneRoster(); if (sr) list.push({ id:'sceneroster', at: bc.now, text: sr, priority: 70 }); } catch(e){}   // every character is aware of the others (name + gist)
     return list;
   }
@@ -15190,6 +15583,9 @@ var RookChloeAffect = (() => {
       var snap = ar.observe(String(text || ''));
       state.affect = ar.get(); persistState();
       renderAffect(snap);
+      // WIDENED BRAIN: advance the live model of the USER (theory-of-mind) + the inner-voice clock from this turn,
+      // using the affect we just read. Stateful + self-gating; fully guarded so it can never touch the reply path.
+      try { if (window.ChloeMind) window.ChloeMind.observe({ message: String(text || ''), features: { valence: snap.valence, arousal: snap.arousal }, now: Date.now() }); } catch(e){}
     } catch(e){}
   }
   // Topic + interest reader (slice 1: observe + show only). Tracks what the conversation is about over time as
